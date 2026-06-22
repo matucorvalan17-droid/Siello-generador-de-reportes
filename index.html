@@ -1752,6 +1752,7 @@ function App(){
   const [reports,setReports]=useState(()=>loadReports());
   const [currentId,setCurrentId]=useState(null);
   const [branding,setBranding]=useState(()=>loadBranding());
+  const [previewZoom,setPreviewZoom]=useState(.46);
 
   const current=reports.find(r=>r.id===currentId)||null;
   const activeSection=view==='dashboard'?'dashboard':null;
@@ -1831,7 +1832,7 @@ function App(){
                 ))}
               </div>
             </div>
-            <div style={{flex:1,overflow:'hidden',display:'flex'}}>
+            <div style={{flex:1,overflow:'hidden',display:view==='form'?'flex':'block'}}>
               {view==='form'
                 ? <>
                     <div style={{flex:'1 1 56%',minWidth:0,height:'100%'}}>
@@ -1840,10 +1841,29 @@ function App(){
                         onBack={()=>setView('dashboard')}
                         lang={lang} branding={branding} onBrandingChange={handleBrandingChange}/>
                     </div>
-                    <div style={{flex:'1 1 44%',minWidth:0,height:'100%',overflowY:'auto',
-                      borderLeft:'1px solid var(--border)',background:'#030303',padding:16}}>
-                      <div style={{zoom:.46}}>
-                        <ReportPreview report={current} lang={lang} branding={branding} embedded/>
+                    <div style={{flex:'1 1 44%',minWidth:0,height:'100%',display:'flex',
+                      flexDirection:'column',borderLeft:'1px solid var(--border)'}}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',
+                        gap:4,padding:'7px 10px',borderBottom:'1px solid var(--border)',
+                        background:'var(--surface)',flexShrink:0}}>
+                        <button className="btn-ghost" style={{width:24,height:24,padding:0,
+                          fontSize:13,lineHeight:1}}
+                          onClick={()=>setPreviewZoom(z=>Math.max(.2,+(z-.06).toFixed(2)))}>
+                          −
+                        </button>
+                        <span style={{fontSize:10,color:'var(--muted)',width:34,textAlign:'center'}}>
+                          {Math.round(previewZoom/.46*100)}%
+                        </span>
+                        <button className="btn-ghost" style={{width:24,height:24,padding:0,
+                          fontSize:13,lineHeight:1}}
+                          onClick={()=>setPreviewZoom(z=>Math.min(.9,+(z+.06).toFixed(2)))}>
+                          +
+                        </button>
+                      </div>
+                      <div style={{flex:1,overflowY:'auto',background:'#030303',padding:16}}>
+                        <div style={{zoom:previewZoom}}>
+                          <ReportPreview report={current} lang={lang} branding={branding} embedded/>
+                        </div>
                       </div>
                     </div>
                   </>
