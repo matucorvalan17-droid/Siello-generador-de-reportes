@@ -320,7 +320,7 @@ function saveReports(r){localStorage.setItem(SK,JSON.stringify(r))}
 
 const BK='siello_branding_v2';
 const DEFAULT_BRANDING={logo1Url:null,logo2Url:null,borderColor:'#F5A623',
-  signatureUrl:null,authorName:'',authorRole:''};
+  signatureUrl:null,authorName:'',authorRole:'',logo1Scale:1,logo2Scale:1};
 function loadBranding(){
   try{return {...DEFAULT_BRANDING,...JSON.parse(localStorage.getItem(BK)||'{}')}}
   catch{return {...DEFAULT_BRANDING}}
@@ -1087,6 +1087,8 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
   const primaryLogo=isCustom?(branding?.logo1Url||SIELLO_REPORT_URL):SIELLO_REPORT_URL;
   const secondaryLogo=isCustom?(branding?.logo2Url||null):NIKE_URL;
   const secondaryLogoFilter=isCustom?'none':'brightness(0) invert(1)';
+  const logo1Scale=isCustom?(branding?.logo1Scale||1):1;
+  const logo2Scale=isCustom?(branding?.logo2Scale||1):1;
   const [exporting,setExporting]=useState(false);
   const age=calcAge(report.dateOfBirth);
   const flagCode=getFlagCode(report.nationality);
@@ -1328,10 +1330,10 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
               <div style={{flex:1,padding:'28px 30px 28px',display:'flex',flexDirection:'column',justifyContent:'center',gap:10}}>
                 {/* Logo row */}
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
-                  <img src={primaryLogo} style={{height:28,objectFit:'contain'}}/>
+                  <img src={primaryLogo} style={{height:28*logo1Scale,objectFit:'contain'}}/>
                   {secondaryLogo&&<>
                     <div style={{width:1,height:18,background:'rgba(255,255,255,0.15)',flexShrink:0}}/>
-                    <img src={secondaryLogo} style={{height:32,objectFit:'contain',filter:secondaryLogoFilter}}/>
+                    <img src={secondaryLogo} style={{height:32*logo2Scale,objectFit:'contain',filter:secondaryLogoFilter}}/>
                   </>}
                 </div>
                 {/* PERFORMANCE REPORT label */}
@@ -1574,8 +1576,8 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
               borderTop:`1px solid ${P.border}`,
               display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <img src={primaryLogo} style={{height:22,objectFit:'contain'}}/>
-                {secondaryLogo&&<img src={secondaryLogo} style={{height:18,objectFit:'contain',filter:secondaryLogoFilter}}/>}
+                <img src={primaryLogo} style={{height:22*logo1Scale,objectFit:'contain'}}/>
+                {secondaryLogo&&<img src={secondaryLogo} style={{height:18*logo2Scale,objectFit:'contain',filter:secondaryLogoFilter}}/>}
               </div>
               <div style={{fontSize:8,color:P.line,textAlign:'right',
                 fontFamily:'Helvetica,Arial,sans-serif',letterSpacing:'.06em'}}>
@@ -1591,7 +1593,7 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
 }
 
 // ─── CUSTOM BRANDING ────────────────────────────────────────────────
-function LogoUploadField({label,sub,value,fallback,fallbackInvert,onUpload,onRemove,uploadLabel,removeLabel}){
+function LogoUploadField({label,sub,value,fallback,fallbackInvert,onUpload,onRemove,uploadLabel,removeLabel,scale,onScaleChange,sizeLabel}){
   const inputId=React.useId?React.useId():label;
   return(
     <div style={{background:'var(--surface)',border:'1px solid var(--border)',
@@ -1626,6 +1628,19 @@ function LogoUploadField({label,sub,value,fallback,fallbackInvert,onUpload,onRem
           )}
         </div>
       </div>
+      {value&&onScaleChange&&(
+        <div style={{marginTop:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+            <span style={{fontSize:10,fontWeight:600,color:'var(--muted)',
+              textTransform:'uppercase',letterSpacing:'.06em'}}>{sizeLabel}</span>
+            <span style={{fontSize:10,fontWeight:700,color:'var(--gold)'}}>
+              {Math.round((scale||1)*100)}%
+            </span>
+          </div>
+          <input type="range" min={0.5} max={2.5} step={0.05} value={scale||1}
+            onChange={e=>onScaleChange(parseFloat(e.target.value))}/>
+        </div>
+      )}
     </div>
   );
 }
@@ -1649,6 +1664,7 @@ function CustomBranding({lang,branding,onChange}){
     authorNamePh:'Nombre y apellido',
     authorRolePh:'Cargo / rol (ej: Entrenador de Fútbol)',
     preview:'Vista previa',
+    sizeLabel:'Tamaño',
   }:{
     title:'Brand settings',
     sub:'Upload your own logos and pick the border color for 100% custom reports.',
@@ -1667,6 +1683,7 @@ function CustomBranding({lang,branding,onChange}){
     authorNamePh:'Full name',
     authorRolePh:'Title / role (e.g. Football Coach)',
     preview:'Preview',
+    sizeLabel:'Size',
   };
 
   return(
@@ -1678,13 +1695,17 @@ function CustomBranding({lang,branding,onChange}){
         value={branding.logo1Url} fallback={SIELLO_REPORT_URL} fallbackInvert={false}
         onUpload={url=>onChange({...branding,logo1Url:url})}
         onRemove={()=>onChange({...branding,logo1Url:null})}
-        uploadLabel={L.upload} removeLabel={L.remove}/>
+        uploadLabel={L.upload} removeLabel={L.remove}
+        scale={branding.logo1Scale} sizeLabel={L.sizeLabel}
+        onScaleChange={s=>onChange({...branding,logo1Scale:s})}/>
 
       <LogoUploadField label={L.logo2Title} sub={L.logo2Sub}
         value={branding.logo2Url} fallback={NIKE_URL} fallbackInvert={true}
         onUpload={url=>onChange({...branding,logo2Url:url})}
         onRemove={()=>onChange({...branding,logo2Url:null})}
-        uploadLabel={L.upload} removeLabel={L.remove}/>
+        uploadLabel={L.upload} removeLabel={L.remove}
+        scale={branding.logo2Scale} sizeLabel={L.sizeLabel}
+        onScaleChange={s=>onChange({...branding,logo2Scale:s})}/>
 
       <div style={{background:'var(--surface)',border:'1px solid var(--border)',
         borderRadius:10,padding:20,marginBottom:16}}>
