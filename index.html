@@ -690,7 +690,7 @@ function Step1({report,onChange,lang}){
             <Lbl text={L.pos}/>
             <select className="input-field" value={report.position} onChange={u('position')}>
               <option value="">{L.sel}</option>
-              {POSITIONS.map(p=><option key={p} value={p}>{p}</option>)}
+              {POSITIONS.map(p=><option key={p} value={p}>{translatePos(lang,p)}</option>)}
             </select>
           </div>
           <div>
