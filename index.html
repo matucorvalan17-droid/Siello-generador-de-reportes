@@ -23,7 +23,7 @@ input,select,textarea{font-family:var(--font);font-size:13px;color:var(--text)}
 textarea{resize:none}
 input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer;width:100%}
 input[type=range]::-webkit-slider-track{background:var(--surface3);height:4px;border-radius:2px}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;background:var(--gold);height:16px;width:16px;border-radius:50%;margin-top:-6px;box-shadow:0 0 8px rgba(245,166,35,.4)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;background:var(--gold);height:12px;width:12px;border-radius:50%;margin-top:-4px;box-shadow:0 0 4px rgba(245,166,35,.35)}
 input[type=range]:focus{outline:none}
 .grid-bg{background-image:linear-gradient(rgba(245,166,35,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(245,166,35,.015) 1px,transparent 1px);background-size:32px 32px}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#000;border:none;cursor:pointer;font-family:var(--font);font-weight:700;border-radius:8px;transition:opacity .15s,transform .1s}
@@ -311,7 +311,7 @@ const ATTR_GROUPS=[
     ]},
 ];
 const ALL_KEYS=ATTR_GROUPS.flatMap(g=>g.attrs.map(a=>a.key));
-function defaultAttrs(){return Object.fromEntries(ALL_KEYS.map(k=>[k,5]))}
+function defaultAttrs(){return Object.fromEntries(ALL_KEYS.map(k=>[k,3]))}
 
 // ─── STORAGE ──────────────────────────────────────────────────────
 const SK='siello_v4';
@@ -786,8 +786,8 @@ function Step2({report,onChange,lang}){
           </div>
           <div className="card" style={{padding:15,display:'flex',flexDirection:'column',gap:13}}>
             {g.attrs.map(({key,label})=>{
-              const v=report.attributes[key]||5;
-              const pct=(v/10)*100;
+              const v=report.attributes[key]||3;
+              const pct=((v-1)/4)*100;
               const lStr=typeof label==='object'?(label[lang]||label.es):label;
               return(
                 <div key={key}>
@@ -801,7 +801,7 @@ function Step2({report,onChange,lang}){
                     <div style={{position:'absolute',left:0,top:0,height:'100%',borderRadius:2,
                       width:`${pct}%`,background:'linear-gradient(90deg,rgba(245,166,35,.5),var(--gold))'}}/>
                   </div>
-                  <input type="range" min={0} max={10} step={.5} value={v}
+                  <input type="range" min={1} max={5} step={.5} value={v}
                     onChange={e=>upd(key,parseFloat(e.target.value))}/>
                 </div>
               );
@@ -1461,7 +1461,7 @@ function ReportPreview({report,lang,onEdit,branding}){
                     {/* Score bars (1-5 scale) */}
                     <div style={{display:'flex',flexDirection:'column',gap:9}}>
                       {g.attrs.map(({key,label})=>{
-                        const v=(report.attributes[key]||0)/2; // 0-10 → 0-5
+                        const v=report.attributes[key]||0; // 1-5 scale
                         const pct=(v/5)*100;
                         const lStr=typeof label==='object'?(label[lang]||label.es):label;
                         return(
