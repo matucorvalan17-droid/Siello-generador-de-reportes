@@ -317,6 +317,13 @@ function defaultAttrs(){return Object.fromEntries(ALL_KEYS.map(k=>[k,5]))}
 const SK='siello_v4';
 function loadReports(){try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch{return[]}}
 function saveReports(r){localStorage.setItem(SK,JSON.stringify(r))}
+
+const BK='siello_branding_v1';
+function loadBranding(){
+  try{return {...{logoUrl:null,borderColor:'#F5A623'},...JSON.parse(localStorage.getItem(BK)||'{}')}}
+  catch{return {logoUrl:null,borderColor:'#F5A623'}}
+}
+function saveBranding(b){localStorage.setItem(BK,JSON.stringify(b))}
 function newReport(){
   const id=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now();
   return{id,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),
@@ -417,12 +424,13 @@ function Sidebar({view,onNav,lang,setLang}){
         <img src={SIELLO_URL} style={{height:28,objectFit:'contain'}}/>
       </div>
       <nav style={{flex:1,padding:'10px 6px',display:'flex',flexDirection:'column',gap:3}}>
-        {[{k:'dashboard',icon:'≡',tip:'Dashboard'},{k:'new',icon:'+',tip:'Nuevo Reporte'}].map(({k,icon,tip})=>{
+        {[{k:'dashboard',icon:'≡',tip:'Dashboard'},{k:'new',icon:'+',tip:'Nuevo Reporte'},
+          {k:'custom',icon:'◈',tip:lang==='es'?'Reportes Personalizados':'Custom Reports',fontSize:15}].map(({k,icon,tip,fontSize})=>{
           const active=view===k||(k==='dashboard'&&(view==='form'||view==='preview'));
           return(
             <button key={k} onClick={()=>onNav(k)} title={tip}
               style={{width:'100%',height:38,borderRadius:8,border:'none',cursor:'pointer',
-                fontFamily:'var(--font)',fontWeight:700,fontSize:18,
+                fontFamily:'var(--font)',fontWeight:700,fontSize:fontSize||18,
                 background:active?'rgba(245,166,35,.1)':'transparent',
                 color:active?'var(--gold)':'var(--dim)',transition:'all .15s',
                 display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -1032,7 +1040,10 @@ function PdfDiv({label}){
 }
 
 // ─── REPORT PREVIEW ───────────────────────────────────────────────
-function ReportPreview({report,lang,onEdit}){
+function ReportPreview({report,lang,onEdit,branding}){
+  const accent=branding?.borderColor||'#F5A623';
+  const partnerLogo=branding?.logoUrl||NIKE_URL;
+  const partnerLogoFilter=branding?.logoUrl?'none':'brightness(0) invert(1)';
   const [exporting,setExporting]=useState(false);
   const age=calcAge(report.dateOfBirth);
   const flagCode=getFlagCode(report.nationality);
@@ -1257,16 +1268,16 @@ function ReportPreview({report,lang,onEdit}){
           borderRadius:0,overflow:'hidden',position:'relative',
           boxShadow:'0 4px 32px rgba(0,0,0,.2)',
           fontFamily:'Helvetica,Arial,sans-serif'}}>
-          {/* Gold left border line running full height */}
+          {/* Accent left border line running full height */}
           <div style={{position:'absolute',left:0,top:0,bottom:0,width:4,zIndex:10,
-            background:'linear-gradient(180deg,#F5A623 0%,#D4880A 60%,rgba(212,136,10,0.3) 100%)',
+            background:`linear-gradient(180deg,${accent} 0%,${accent} 60%,${accent}4D 100%)`,
             pointerEvents:'none'}}/>
 
           {/* ═══ HERO (dark) ═══ */}
           <div style={{position:'relative',overflow:'hidden',background:'#0A0A0E'}}>
-            {/* Gold stripe top */}
+            {/* Accent stripe top */}
             <div style={{position:'absolute',top:0,left:0,right:0,height:4,zIndex:2,
-              background:'linear-gradient(90deg,#F5A623 0%,#FFD77A 50%,#D4880A 100%)'}}/>
+              background:accent}}/>
             <div style={{position:'relative',display:'flex',minHeight:280}}>
               {/* Left */}
               <div style={{flex:1,padding:'28px 30px 28px',display:'flex',flexDirection:'column',justifyContent:'center',gap:10}}>
@@ -1274,7 +1285,7 @@ function ReportPreview({report,lang,onEdit}){
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
                   <img src={SIELLO_REPORT_URL} style={{height:28,objectFit:'contain'}}/>
                   <div style={{width:1,height:18,background:'rgba(255,255,255,0.15)',flexShrink:0}}/>
-                  <img src={NIKE_URL} style={{height:32,objectFit:'contain',filter:'brightness(0) invert(1)'}}/>
+                  <img src={partnerLogo} style={{height:32,objectFit:'contain',filter:partnerLogoFilter}}/>
                 </div>
                 {/* PERFORMANCE REPORT label */}
                 <div style={{fontSize:8,fontWeight:900,letterSpacing:'.32em',textTransform:'uppercase',
@@ -1511,7 +1522,7 @@ function ReportPreview({report,lang,onEdit}){
               display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <div style={{display:'flex',alignItems:'center',gap:8}}>
                 <img src={SIELLO_REPORT_URL} style={{height:22,objectFit:'contain'}}/>
-                <img src={NIKE_URL} style={{height:18,objectFit:'contain',filter:'brightness(0) invert(1)'}}/>
+                <img src={partnerLogo} style={{height:18,objectFit:'contain',filter:partnerLogoFilter}}/>
               </div>
               <div style={{fontSize:8,color:P.line,textAlign:'right',
                 fontFamily:'Helvetica,Arial,sans-serif',letterSpacing:'.06em'}}>
@@ -1526,14 +1537,129 @@ function ReportPreview({report,lang,onEdit}){
   );
 }
 
+// ─── CUSTOM BRANDING ────────────────────────────────────────────────
+function CustomBranding({lang,branding,onChange}){
+  const fileRef=useRef(null);
+
+  function handleLogoFile(e){
+    const file=e.target.files?.[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>onChange({...branding,logoUrl:reader.result});
+    reader.readAsDataURL(file);
+  }
+  function resetLogo(){
+    onChange({...branding,logoUrl:null});
+    if(fileRef.current) fileRef.current.value='';
+  }
+
+  const L=lang==='es'?{
+    title:'Reportes Personalizados',
+    sub:'Subí tu propio logo y elegí el color del borde para tus reportes.',
+    logoTitle:'Logo personalizado',
+    logoSub:'Reemplaza el logo de Nike en el reporte.',
+    upload:'Subir logo',
+    remove:'Quitar (usar Nike por defecto)',
+    colorTitle:'Color del borde',
+    colorSub:'Reemplaza el dorado de la línea del borde del reporte.',
+    preview:'Vista previa',
+  }:{
+    title:'Custom Reports',
+    sub:'Upload your own logo and pick the border color for your reports.',
+    logoTitle:'Custom logo',
+    logoSub:'Replaces the Nike logo in the report.',
+    upload:'Upload logo',
+    remove:'Remove (use default Nike)',
+    colorTitle:'Border color',
+    colorSub:'Replaces the gold report border line.',
+    preview:'Preview',
+  };
+
+  return(
+    <div style={{flex:1,overflowY:'auto',padding:'28px 32px',maxWidth:680}}>
+      <h2 style={{fontSize:18,fontWeight:800,marginBottom:4}}>{L.title}</h2>
+      <p style={{fontSize:12,color:'var(--muted)',marginBottom:24}}>{L.sub}</p>
+
+      <div style={{background:'var(--surface)',border:'1px solid var(--border)',
+        borderRadius:10,padding:20,marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:2}}>{L.logoTitle}</div>
+        <div style={{fontSize:11,color:'var(--muted)',marginBottom:14}}>{L.logoSub}</div>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <div style={{width:72,height:72,borderRadius:8,background:'#0A0A0E',
+            border:'1px solid var(--border)',display:'flex',alignItems:'center',
+            justifyContent:'center',flexShrink:0,overflow:'hidden'}}>
+            <img src={branding.logoUrl||NIKE_URL}
+              style={{maxWidth:'80%',maxHeight:'80%',objectFit:'contain',
+                filter:branding.logoUrl?'none':'brightness(0) invert(1)'}}/>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            <input ref={fileRef} type="file" accept="image/*" onChange={handleLogoFile}
+              style={{display:'none'}} id="logo-upload-input"/>
+            <label htmlFor="logo-upload-input" className="btn-gold"
+              style={{padding:'8px 16px',fontSize:12,cursor:'pointer',display:'inline-block',
+                textAlign:'center'}}>
+              {L.upload}
+            </label>
+            {branding.logoUrl&&(
+              <button className="btn-ghost" style={{padding:'7px 14px',fontSize:11}}
+                onClick={resetLogo}>
+                {L.remove}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{background:'var(--surface)',border:'1px solid var(--border)',
+        borderRadius:10,padding:20,marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:2}}>{L.colorTitle}</div>
+        <div style={{fontSize:11,color:'var(--muted)',marginBottom:14}}>{L.colorSub}</div>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <input type="color" value={branding.borderColor}
+            onChange={e=>onChange({...branding,borderColor:e.target.value})}
+            style={{width:48,height:36,borderRadius:6,border:'1px solid var(--border)',
+              background:'none',cursor:'pointer',padding:0}}/>
+          <input className="input-field" style={{maxWidth:140,fontSize:12}}
+            value={branding.borderColor}
+            onChange={e=>onChange({...branding,borderColor:e.target.value})}/>
+        </div>
+      </div>
+
+      <div style={{background:'var(--surface)',border:'1px solid var(--border)',
+        borderRadius:10,padding:20}}>
+        <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>{L.preview}</div>
+        <div style={{position:'relative',background:'#0A0A0E',borderRadius:6,
+          overflow:'hidden',height:80,display:'flex',alignItems:'center',
+          gap:12,padding:'0 18px'}}>
+          <div style={{position:'absolute',left:0,top:0,bottom:0,width:4,
+            background:branding.borderColor}}/>
+          <div style={{position:'absolute',top:0,left:0,right:0,height:3,
+            background:branding.borderColor}}/>
+          <img src={SIELLO_REPORT_URL} style={{height:22,objectFit:'contain'}}/>
+          <div style={{width:1,height:16,background:'rgba(255,255,255,0.15)'}}/>
+          <img src={branding.logoUrl||NIKE_URL}
+            style={{height:26,objectFit:'contain',
+              filter:branding.logoUrl?'none':'brightness(0) invert(1)'}}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── APP ──────────────────────────────────────────────────────────
 function App(){
   const [lang,setLang]=useState('es');
   const [view,setView]=useState('dashboard');
   const [reports,setReports]=useState(()=>loadReports());
   const [currentId,setCurrentId]=useState(null);
+  const [branding,setBranding]=useState(()=>loadBranding());
 
   const current=reports.find(r=>r.id===currentId)||null;
+
+  function handleBrandingChange(next){
+    setBranding(next);
+    saveBranding(next);
+  }
 
   function upsert(updated){
     const next=reports.map(r=>r.id===updated.id?updated:r);
@@ -1551,7 +1677,7 @@ function App(){
     setReports(next); saveReports(next);
     if(currentId===id){setCurrentId(null);setView('dashboard')}
   }
-  function handleNav(k){if(k==='new') handleNew(); else setView('dashboard')}
+  function handleNav(k){if(k==='new') handleNew(); else if(k==='custom') setView('custom'); else setView('dashboard')}
 
   return(
     <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
@@ -1564,6 +1690,10 @@ function App(){
             <Dashboard reports={reports} lang={lang}
               onNew={handleNew} onOpen={handleOpen} onDelete={handleDelete}/>
           </div>
+        )}
+
+        {view==='custom'&&(
+          <CustomBranding lang={lang} branding={branding} onChange={handleBrandingChange}/>
         )}
 
         {(view==='form'||view==='preview')&&current&&(
@@ -1607,7 +1737,7 @@ function App(){
                     onPreview={()=>setView('preview')}
                     onBack={()=>setView('dashboard')}
                     lang={lang}/>
-                : <ReportPreview report={current} lang={lang}
+                : <ReportPreview report={current} lang={lang} branding={branding}
                     onEdit={()=>setView('form')}/>
               }
             </div>
