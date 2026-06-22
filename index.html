@@ -674,18 +674,18 @@ function PhotoUpload({value,onChange,label}){
   }
   return(
     <div onClick={()=>ref.current?.click()}
-      style={{position:'relative',width:'100%',aspectRatio:'4/3',borderRadius:10,
+      style={{position:'relative',width:120,height:120,borderRadius:10,
         background:'var(--surface3)',border:'2px dashed var(--border)',
         display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
-        cursor:'pointer',overflow:'hidden'}}
+        cursor:'pointer',overflow:'hidden',flexShrink:0}}
       onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(245,166,35,.5)'}
       onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}>
       <input ref={ref} type="file" accept="image/*" style={{display:'none'}} onChange={handleFile}/>
       {value
         ? <img src={value} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
-        : <div style={{textAlign:'center',padding:12}}>
-            <div style={{fontSize:20,opacity:.3,marginBottom:6}}>[ ]</div>
-            <div style={{fontSize:11,color:'var(--muted)'}}>{label}</div>
+        : <div style={{textAlign:'center',padding:8}}>
+            <div style={{fontSize:16,opacity:.3,marginBottom:4}}>[ ]</div>
+            <div style={{fontSize:9.5,color:'var(--muted)',lineHeight:1.3}}>{label}</div>
           </div>
       }
     </div>
@@ -1081,7 +1081,7 @@ function PdfDiv({label}){
 }
 
 // ─── REPORT PREVIEW ───────────────────────────────────────────────
-function ReportPreview({report,lang,onEdit,branding}){
+function ReportPreview({report,lang,onEdit,branding,embedded}){
   const isCustom=report.brand==='custom';
   const accent=isCustom?(branding?.borderColor||'#F5A623'):'#F5A623';
   const primaryLogo=isCustom?(branding?.logo1Url||SIELLO_REPORT_URL):SIELLO_REPORT_URL;
@@ -1271,6 +1271,7 @@ function ReportPreview({report,lang,onEdit,branding}){
   return(
     <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
       {/* Top bar */}
+      {!embedded&&(
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
         padding:'13px 20px',borderBottom:'1px solid var(--border)',
         background:'var(--surface)',flexShrink:0}}>
@@ -1303,10 +1304,11 @@ function ReportPreview({report,lang,onEdit,branding}){
           </button>
         </div>
       </div>
+      )}
 
       {/* PDF scroll area */}
-      <div style={{flex:1,overflowY:'auto',padding:'24px',background:'#030303'}}>
-        <div id="pdf-layout" style={{
+      <div style={{flex:1,overflowY:'auto',padding:embedded?0:'24px',background:embedded?'transparent':'#030303'}}>
+        <div id={embedded?undefined:'pdf-layout'} style={{
           maxWidth:860,margin:'0 auto',background:P.bg,
           borderRadius:0,overflow:'hidden',position:'relative',
           boxShadow:'0 4px 32px rgba(0,0,0,.2)',
@@ -1829,12 +1831,22 @@ function App(){
                 ))}
               </div>
             </div>
-            <div style={{flex:1,overflow:'hidden'}}>
+            <div style={{flex:1,overflow:'hidden',display:'flex'}}>
               {view==='form'
-                ? <ReportForm report={current} onUpdate={upsert}
-                    onPreview={()=>setView('preview')}
-                    onBack={()=>setView('dashboard')}
-                    lang={lang} branding={branding} onBrandingChange={handleBrandingChange}/>
+                ? <>
+                    <div style={{flex:'1 1 56%',minWidth:0,height:'100%'}}>
+                      <ReportForm report={current} onUpdate={upsert}
+                        onPreview={()=>setView('preview')}
+                        onBack={()=>setView('dashboard')}
+                        lang={lang} branding={branding} onBrandingChange={handleBrandingChange}/>
+                    </div>
+                    <div style={{flex:'1 1 44%',minWidth:0,height:'100%',overflowY:'auto',
+                      borderLeft:'1px solid var(--border)',background:'#030303',padding:16}}>
+                      <div style={{zoom:.46}}>
+                        <ReportPreview report={current} lang={lang} branding={branding} embedded/>
+                      </div>
+                    </div>
+                  </>
                 : <ReportPreview report={current} lang={lang} branding={branding}
                     onEdit={()=>setView('form')}/>
               }
