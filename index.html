@@ -416,6 +416,7 @@ function HexChart({attrs,values,color,size=200,lang='es'}){
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────
 function Sidebar({activeSection,onNav,lang,setLang}){
+  const active=activeSection==='dashboard';
   return(
     <aside style={{position:'fixed',left:0,top:0,height:'100%',width:58,
       background:'var(--surface)',borderRight:'1px solid var(--border)',
@@ -425,20 +426,14 @@ function Sidebar({activeSection,onNav,lang,setLang}){
         <img src={SIELLO_URL} style={{height:28,objectFit:'contain'}}/>
       </div>
       <nav style={{flex:1,padding:'10px 6px',display:'flex',flexDirection:'column',gap:3}}>
-        {[{k:'siello',icon:'≡',tip:lang==='es'?'Reportes Siello Academy':'Siello Academy Reports'},
-          {k:'custom',icon:'◈',tip:lang==='es'?'Reportes Personalizados':'Custom Reports',fontSize:15}].map(({k,icon,tip,fontSize})=>{
-          const active=activeSection===k;
-          return(
-            <button key={k} onClick={()=>onNav(k)} title={tip}
-              style={{width:'100%',height:38,borderRadius:8,border:'none',cursor:'pointer',
-                fontFamily:'var(--font)',fontWeight:700,fontSize:fontSize||18,
-                background:active?'rgba(245,166,35,.1)':'transparent',
-                color:active?'var(--gold)':'var(--dim)',transition:'all .15s',
-                display:'flex',alignItems:'center',justifyContent:'center'}}>
-              {icon}
-            </button>
-          );
-        })}
+        <button onClick={onNav} title={lang==='es'?'Reportes':'Reports'}
+          style={{width:'100%',height:38,borderRadius:8,border:'none',cursor:'pointer',
+            fontFamily:'var(--font)',fontWeight:700,fontSize:18,
+            background:active?'rgba(245,166,35,.1)':'transparent',
+            color:active?'var(--gold)':'var(--dim)',transition:'all .15s',
+            display:'flex',alignItems:'center',justifyContent:'center'}}>
+          ≡
+        </button>
       </nav>
       <div style={{padding:'8px 6px',borderTop:'1px solid var(--border)',
         display:'flex',flexDirection:'column',gap:3}}>
@@ -632,6 +627,40 @@ function Dashboard({reports,lang,brand='siello',headerLogo,onNew,onOpen,onDelete
       }
     </div>
 
+  );
+}
+
+// ─── REPORTS HUB (tabbed Siello/Custom dashboards) ─────────────────
+function ReportsHub({reports,lang,branding,tab,onTabChange,onNew,onOpen,onDelete}){
+  const TABS=[
+    {k:'siello',label:lang==='es'?'Reportes Siello Academy':'Siello Academy Reports'},
+    {k:'custom',label:lang==='es'?'Reportes Personalizados':'Custom Reports'},
+  ];
+  return(
+    <div style={{flex:1,overflowY:'auto'}}>
+      <div style={{position:'sticky',top:0,zIndex:5,background:'var(--bg)',
+        padding:'20px 32px 0',borderBottom:'1px solid var(--border)'}}>
+        <div style={{display:'flex',gap:4}}>
+          {TABS.map(t=>{
+            const active=tab===t.k;
+            return(
+              <button key={t.k} onClick={()=>onTabChange(t.k)}
+                style={{padding:'10px 18px',fontSize:12.5,fontWeight:700,
+                  fontFamily:'var(--font)',border:'none',cursor:'pointer',
+                  background:'transparent',borderRadius:'8px 8px 0 0',
+                  color:active?'var(--gold)':'var(--muted)',
+                  borderBottom:active?'2px solid var(--gold)':'2px solid transparent',
+                  transition:'all .15s'}}>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <Dashboard reports={reports} lang={lang} brand={tab}
+        headerLogo={tab==='custom'?branding.logo1Url:null}
+        onNew={()=>onNew(tab)} onOpen={onOpen} onDelete={onDelete}/>
+    </div>
   );
 }
 
@@ -867,18 +896,22 @@ function Step4({report,onChange,lang}){
 }
 
 // ─── REPORT FORM ──────────────────────────────────────────────────
-function ReportForm({report,onUpdate,onPreview,onBack,lang}){
+function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingChange}){
+  const isCustom=report.brand==='custom';
   const [step,setStep]=useState(0);
   const [saved,setSaved]=useState(false);
   function handleChange(updates){
     onUpdate({...report,...updates,updatedAt:new Date().toISOString()});
   }
   function handleSave(){setSaved(true);setTimeout(()=>setSaved(false),2200)}
-  function handleNext(){handleSave();if(step<3)setStep(s=>s+1)}
-  const STEPS={
-    es:['Datos','Evaluación','Textos','Equipos'],
-    en:['Player','Evaluation','Text','Teams'],
-  }[lang];
+  const STEPS=(isCustom
+    ?{es:['Personalización','Datos','Evaluación','Textos','Equipos'],
+      en:['Branding','Player','Evaluation','Text','Teams']}
+    :{es:['Datos','Evaluación','Textos','Equipos'],
+      en:['Player','Evaluation','Text','Teams']})[lang];
+  const lastStep=STEPS.length-1;
+  const offset=isCustom?1:0;
+  function handleNext(){handleSave();if(step<lastStep)setStep(s=>s+1)}
   return(
     <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
       {/* Steps */}
@@ -899,7 +932,7 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang}){
                 <span style={{fontSize:11,fontWeight:600,whiteSpace:'nowrap',
                   color:i===step?'var(--text)':'var(--muted)'}}>{s}</span>
               </button>
-              {i<3&&<div style={{flex:1,height:1,minWidth:6,
+              {i<lastStep&&<div style={{flex:1,height:1,minWidth:6,
                 background:i<step?'var(--gold)':'var(--border)'}}/>}
             </React.Fragment>
           ))}
@@ -907,10 +940,12 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang}){
       </div>
       {/* Content */}
       <div style={{flex:1,overflowY:'auto',padding:'20px'}}>
-        {step===0&&<Step1 report={report} onChange={handleChange} lang={lang}/>}
-        {step===1&&<Step2 report={report} onChange={handleChange} lang={lang}/>}
-        {step===2&&<Step3 report={report} onChange={handleChange} lang={lang}/>}
-        {step===3&&<Step4 report={report} onChange={handleChange} lang={lang}/>}
+        {isCustom&&step===0&&
+          <CustomBranding lang={lang} branding={branding} onChange={onBrandingChange}/>}
+        {step-offset===0&&<Step1 report={report} onChange={handleChange} lang={lang}/>}
+        {step-offset===1&&<Step2 report={report} onChange={handleChange} lang={lang}/>}
+        {step-offset===2&&<Step3 report={report} onChange={handleChange} lang={lang}/>}
+        {step-offset===3&&<Step4 report={report} onChange={handleChange} lang={lang}/>}
       </div>
       {/* Footer */}
       <div style={{padding:'12px 20px',borderTop:'1px solid var(--border)',
@@ -934,7 +969,7 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang}){
             onClick={onPreview}>
             {lang==='es'?'Vista Previa':'Preview'}
           </button>
-          {step<3
+          {step<lastStep
             ? <button className="btn-gold" style={{padding:'7px 14px',fontSize:12}}
                 onClick={handleNext}>
                 {lang==='es'?'Siguiente':'Next'} →
@@ -1671,17 +1706,14 @@ function CustomBranding({lang,branding,onChange}){
 // ─── APP ──────────────────────────────────────────────────────────
 function App(){
   const [lang,setLang]=useState('es');
-  const [view,setView]=useState('dashboard-siello');
+  const [view,setView]=useState('dashboard');
+  const [dashboardTab,setDashboardTab]=useState('siello');
   const [reports,setReports]=useState(()=>loadReports());
   const [currentId,setCurrentId]=useState(null);
   const [branding,setBranding]=useState(()=>loadBranding());
 
   const current=reports.find(r=>r.id===currentId)||null;
-  const activeSection=
-    view==='dashboard-custom' ? 'custom'
-    : view==='dashboard-siello' ? 'siello'
-    : current ? (current.brand||'siello') : 'siello';
-  const dashboardView=activeSection==='custom'?'dashboard-custom':'dashboard-siello';
+  const activeSection=view==='dashboard'?'dashboard':null;
 
   function handleBrandingChange(next){
     setBranding(next);
@@ -1696,16 +1728,20 @@ function App(){
   function handleNew(brand){
     const r=newReport(brand); const next=[r,...reports];
     setReports(next); saveReports(next);
-    setCurrentId(r.id); setView('form');
+    setDashboardTab(brand); setCurrentId(r.id); setView('form');
   }
-  function handleOpen(id){setCurrentId(id);setView('form')}
+  function handleOpen(id){
+    const r=reports.find(x=>x.id===id);
+    setDashboardTab(r?.brand||'siello');
+    setCurrentId(id);setView('form');
+  }
   function handleDelete(id){
     const r=reports.find(x=>x.id===id);
     const next=reports.filter(r=>r.id!==id);
     setReports(next); saveReports(next);
-    if(currentId===id){setCurrentId(null);setView(r?.brand==='custom'?'dashboard-custom':'dashboard-siello')}
+    if(currentId===id){setCurrentId(null);setDashboardTab(r?.brand||'siello');setView('dashboard')}
   }
-  function handleNav(k){setView(k==='custom'?'dashboard-custom':'dashboard-siello')}
+  function handleNav(){setView('dashboard')}
 
   return(
     <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
@@ -1713,20 +1749,10 @@ function App(){
       <main style={{flex:1,marginLeft:58,height:'100%',overflow:'hidden',
         display:'flex',flexDirection:'column'}}>
 
-        {view==='dashboard-siello'&&(
-          <div style={{flex:1,overflowY:'auto'}}>
-            <Dashboard reports={reports} lang={lang} brand="siello"
-              onNew={()=>handleNew('siello')} onOpen={handleOpen} onDelete={handleDelete}/>
-          </div>
-        )}
-
-        {view==='dashboard-custom'&&(
-          <div style={{flex:1,overflowY:'auto',padding:'28px 32px'}}>
-            <CustomBranding lang={lang} branding={branding} onChange={handleBrandingChange}/>
-            <Dashboard reports={reports} lang={lang} brand="custom"
-              headerLogo={branding.logo1Url}
-              onNew={()=>handleNew('custom')} onOpen={handleOpen} onDelete={handleDelete}/>
-          </div>
+        {view==='dashboard'&&(
+          <ReportsHub reports={reports} lang={lang} branding={branding}
+            tab={dashboardTab} onTabChange={setDashboardTab}
+            onNew={handleNew} onOpen={handleOpen} onDelete={handleDelete}/>
         )}
 
         {(view==='form'||view==='preview')&&current&&(
@@ -1735,7 +1761,7 @@ function App(){
               padding:'9px 17px',borderBottom:'1px solid var(--border)',
               background:'var(--surface)',flexShrink:0}}>
               <button className="btn-ghost" style={{padding:'5px 11px',fontSize:11}}
-                onClick={()=>setView(dashboardView)}>
+                onClick={()=>setView('dashboard')}>
                 &larr; Dashboard
               </button>
               <div style={{width:1,height:16,background:'var(--border)'}}/>
@@ -1768,8 +1794,8 @@ function App(){
               {view==='form'
                 ? <ReportForm report={current} onUpdate={upsert}
                     onPreview={()=>setView('preview')}
-                    onBack={()=>setView(dashboardView)}
-                    lang={lang}/>
+                    onBack={()=>setView('dashboard')}
+                    lang={lang} branding={branding} onBrandingChange={handleBrandingChange}/>
                 : <ReportPreview report={current} lang={lang} branding={branding}
                     onEdit={()=>setView('form')}/>
               }
