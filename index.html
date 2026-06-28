@@ -310,7 +310,48 @@ const ATTR_GROUPS=[
       {key:'lecturaJuego',    label:{es:'LECTURA\nDE JUEGO',    en:'GAME\nREADING'}},
     ]},
 ];
-const ALL_KEYS=ATTR_GROUPS.flatMap(g=>g.attrs.map(a=>a.key));
+const GK_ATTR_GROUPS=[
+  {id:'fisicos',color:'#F5A623',
+    label:{es:'VALORES FÍSICOS',en:'PHYSICAL VALUES'},
+    attrs:[
+      {key:'gkPotenciaSalto',  label:{es:'POTENCIA\nDE SALTO',      en:'JUMPING\nPOWER'}},
+      {key:'gkVelReaccion',    label:{es:'VELOCIDAD\nDE REACCIÓN',  en:'REACTION\nSPEED'}},
+      {key:'gkAceleracionCD',  label:{es:'ACELERACIÓN\nCORTA DISTANCIA', en:'SHORT DISTANCE\nACCELERATION'}},
+      {key:'gkCoordAgilidad',  label:{es:'COORDINACIÓN\nY AGILIDAD', en:'COORDINATION\n& AGILITY'}},
+      {key:'gkFuerzaGeneral',  label:{es:'FUERZA\nGENERAL',          en:'GENERAL\nSTRENGTH'}},
+    ]},
+  {id:'tecnicos',color:'#14B8A6',
+    label:{es:'VALORES TÉCNICOS',en:'TECHNICAL VALUES'},
+    attrs:[
+      {key:'gkAtajadas',       label:{es:'ATAJADAS\n(PELOTAS ALTAS Y BAJAS)', en:'SHOT-STOPPING\n(HIGH & LOW BALLS)'}},
+      {key:'gkJuegoAereo',     label:{es:'JUEGO\nAÉREO',             en:'AERIAL\nGAME'}},
+      {key:'gkEstiradas',      label:{es:'ESTIRADAS Y CAÍDAS\n(MANO A MANO Y REMATES LARGOS)', en:'DIVES & FALLS\n(1 VS 1 & LONG SHOTS)'}},
+      {key:'gkDespejes',       label:{es:'DESPEJES\n(MANOS Y PIES)', en:'CLEARANCES\n(HANDS & FEET)'}},
+      {key:'gkPieDominante',   label:{es:'JUEGO CON PIE\nDOMINANTE', en:'DOMINANT FOOT\nPLAY'}},
+      {key:'gkPieNoDominante', label:{es:'JUEGO CON PIE\nNO DOMINANTE', en:'NON-DOMINANT\nFOOT PLAY'}},
+      {key:'gkSaques',         label:{es:'SAQUES DE MANO\nY DE ARCO', en:'THROWS &\nGOAL KICKS'}},
+    ]},
+  {id:'mentales',color:'#F5A623',
+    label:{es:'VALORES MENTALES',en:'MENTAL VALUES'},
+    attrs:[
+      {key:'gkLiderazgoComm',  label:{es:'LIDERAZGO Y COMUNICACIÓN\nCON LA DEFENSA', en:'LEADERSHIP & COMMUNICATION\nWITH DEFENSE'}},
+      {key:'gkPersonalidadSeg',label:{es:'PERSONALIDAD, CONFIANZA\nY SEGURIDAD', en:'PERSONALITY, CONFIDENCE\n& SECURITY'}},
+      {key:'gkTomaDecisiones', label:{es:'TOMA DE\nDECISIONES',      en:'DECISION\nMAKING'}},
+      {key:'gkRendPresion',    label:{es:'RENDIMIENTO\nBAJO PRESIÓN', en:'PERFORMANCE\nUNDER PRESSURE'}},
+      {key:'gkAutocontrol',    label:{es:'AUTOCONTROL\n(DESPUÉS DE ERRORES)', en:'SELF-CONTROL\n(AFTER MISTAKES)'}},
+    ]},
+  {id:'tacticos',color:'#14B8A6',
+    label:{es:'VALORES TÁCTICOS',en:'TACTICAL VALUES'},
+    attrs:[
+      {key:'gkUbicacionArco',  label:{es:'UBICACIÓN Y ORIENTACIÓN\nEN EL ARCO', en:'POSITIONING & ORIENTATION\nIN GOAL'}},
+      {key:'gkLecturaJuego',   label:{es:'LECTURA DE JUEGO\n(ANTICIPACIÓN DE CENTROS Y REMATES)', en:'GAME READING\n(ANTICIPATION OF CROSSES & SHOTS)'}},
+      {key:'gkTempo1v1',       label:{es:'TEMPORIZACIÓN\nEN EL MANO A MANO', en:'1 VS 1\nTIMING'}},
+      {key:'gkTransicion',     label:{es:'JUEGO DE TRANSICIÓN\n(INICIO DE JUGADAS)', en:'TRANSITION PLAY\n(STARTING ATTACKS)'}},
+      {key:'gkEquilibrioAD',   label:{es:'EQUILIBRIO ATAQUE-DEFENSA\n(GESTIÓN DE RIESGO)', en:'ATTACK-DEFENSE BALANCE\n(RISK MANAGEMENT)'}},
+    ]},
+];
+function getAttrGroups(position){return position==='Portero'?GK_ATTR_GROUPS:ATTR_GROUPS;}
+const ALL_KEYS=[...ATTR_GROUPS,...GK_ATTR_GROUPS].flatMap(g=>g.attrs.map(a=>a.key));
 function defaultAttrs(){return Object.fromEntries(ALL_KEYS.map(k=>[k,3]))}
 
 // ─── STORAGE ──────────────────────────────────────────────────────
@@ -774,9 +815,10 @@ function Step1({report,onChange,lang}){
 // ─── STEP 2: EVALUATION ───────────────────────────────────────────
 function Step2({report,onChange,lang}){
   const upd=(k,v)=>onChange({attributes:{...report.attributes,[k]:v}});
+  const groups=getAttrGroups(report.position);
   return(
     <div style={{display:'flex',flexDirection:'column',gap:22}}>
-      {ATTR_GROUPS.map(g=>(
+      {groups.map(g=>(
         <div key={g.id}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
             <div style={{width:3,height:16,borderRadius:2,background:'var(--gold)'}}/>
@@ -1447,12 +1489,12 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
             <div style={{marginBottom:24}}>
               <PdfDiv label={i(lang,'pdfAnalysis')}/>
               <div style={{display:'grid',gridTemplateColumns:'1fr',gap:14}}>
-                {[
-                  {g:ATTR_GROUPS[1],color:'#FB923C'},
-                  {g:ATTR_GROUPS[3],color:'#F5A623'},
-                  {g:ATTR_GROUPS[0],color:'#34D399'},
-                  {g:ATTR_GROUPS[2],color:'#A78BFA'},
-                ].map(({g,color})=>(
+                {(()=>{const groups=getAttrGroups(report.position);return[
+                  {g:groups[1],color:'#FB923C'},
+                  {g:groups[3],color:'#F5A623'},
+                  {g:groups[0],color:'#34D399'},
+                  {g:groups[2],color:'#A78BFA'},
+                ];})().map(({g,color})=>(
                   <div key={g.id} style={{padding:'16px 14px 14px',borderRadius:9,
                     background:P.surface,border:`1px solid ${P.border}`}}>
                     {/* Title bar */}
