@@ -457,8 +457,14 @@ function HexChart({attrs,values,color,size=200,lang='es'}){
 }
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────
-function Sidebar({activeSection,onNav,lang,setLang}){
+function Sidebar({activeSection,onNav,onNavCovers,lang,setLang}){
   const active=activeSection==='dashboard';
+  const activeCovers=activeSection==='covers';
+  const btnStyle=(on)=>({width:'100%',height:42,borderRadius:8,border:'none',cursor:'pointer',
+    fontFamily:'var(--font)',fontWeight:700,
+    background:on?'rgba(245,166,35,.1)':'transparent',
+    color:on?'var(--gold)':'var(--dim)',transition:'all .15s',
+    display:'flex',alignItems:'center',justifyContent:'center'});
   return(
     <aside style={{position:'fixed',left:0,top:0,height:'100%',width:58,
       background:'var(--surface)',borderRight:'1px solid var(--border)',
@@ -469,12 +475,15 @@ function Sidebar({activeSection,onNav,lang,setLang}){
       </div>
       <nav style={{flex:1,padding:'10px 6px',display:'flex',flexDirection:'column',gap:3}}>
         <button onClick={onNav} title={lang==='es'?'Reportes':'Reports'}
-          style={{width:'100%',height:38,borderRadius:8,border:'none',cursor:'pointer',
-            fontFamily:'var(--font)',fontWeight:700,fontSize:18,
-            background:active?'rgba(245,166,35,.1)':'transparent',
-            color:active?'var(--gold)':'var(--dim)',transition:'all .15s',
-            display:'flex',alignItems:'center',justifyContent:'center'}}>
+          style={{...btnStyle(active),fontSize:20}}>
           ≡
+        </button>
+        <button onClick={onNavCovers} title={lang==='es'?'Portadas':'Covers'}
+          style={{...btnStyle(activeCovers),fontSize:15,flexDirection:'column',gap:1}}>
+          <span style={{lineHeight:1}}>▶</span>
+          <span style={{fontSize:7,fontWeight:700,letterSpacing:'.05em'}}>
+            {lang==='es'?'PORTADAS':'COVERS'}
+          </span>
         </button>
       </nav>
       <div style={{padding:'8px 6px',borderTop:'1px solid var(--border)',
@@ -1808,6 +1817,417 @@ function CustomBranding({lang,branding,onChange}){
 }
 
 // ─── APP ──────────────────────────────────────────────────────────
+// ─── COVERS ────────────────────────────────────────────────────────
+const CK='siello_covers_v1';
+function loadCovers(){try{return JSON.parse(localStorage.getItem(CK)||'[]')}catch{return[]}}
+function saveCovers(c){localStorage.setItem(CK,JSON.stringify(c))}
+function newCover(){
+  return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    playerName:'',dateOfBirth:'',nationality:'',position:'',
+    passport:'',clubs:'',height:'',weight:'',photoUrl:null,
+    createdAt:new Date().toISOString()};
+}
+
+function CoverPreview16x9({cover,lang}){
+  const name=cover.playerName||'Nombre del Jugador';
+  const pos=translatePos(lang,cover.position)||cover.position||'';
+  const dob=fmtDateNum(cover.dateOfBirth)||'';
+  const age=calcAge(cover.dateOfBirth);
+  const parts=name.trim().split(/\s+/);
+  const firstName=parts[0]||'';
+  const lastName=parts.slice(1).join(' ')||'';
+  return(
+    <div id="cover-16x9" style={{width:1280,height:720,overflow:'hidden',
+      position:'relative',background:'#050508',fontFamily:'var(--font)',
+      color:'#fff',userSelect:'none',flexShrink:0}}>
+      {/* Background */}
+      <div style={{position:'absolute',inset:0,
+        background:'linear-gradient(125deg,#08081A 0%,#0D0D28 45%,#050508 100%)'}}/>
+      {/* Subtle grid overlay */}
+      <div style={{position:'absolute',inset:0,opacity:.04,
+        backgroundImage:'linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),'+
+          'linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)',
+        backgroundSize:'60px 60px'}}/>
+      {/* Left gold accent bar */}
+      <div style={{position:'absolute',left:0,top:0,bottom:0,width:6,
+        background:'linear-gradient(180deg,#F5A623 0%,#FB923C 60%,rgba(251,146,60,.2) 100%)'}}/>
+      {/* Right gold bar */}
+      <div style={{position:'absolute',right:0,top:0,bottom:0,width:3,
+        background:'rgba(245,166,35,.15)'}}/>
+      {/* Top line */}
+      <div style={{position:'absolute',top:0,left:0,right:0,height:3,
+        background:'linear-gradient(90deg,#F5A623,rgba(245,166,35,.2))'}}/>
+      {/* Bottom line */}
+      <div style={{position:'absolute',bottom:0,left:0,right:0,height:2,
+        background:'linear-gradient(90deg,rgba(245,166,35,.4),rgba(245,166,35,.05))'}}/>
+
+      {/* Player photo right */}
+      {cover.photoUrl&&(
+        <>
+          <div style={{position:'absolute',right:0,top:0,bottom:0,width:640,
+            backgroundImage:`url(${cover.photoUrl})`,
+            backgroundSize:'cover',backgroundPosition:'center top'}}/>
+          <div style={{position:'absolute',right:0,top:0,bottom:0,width:640,
+            background:'linear-gradient(90deg,#08081A 0%,rgba(8,8,26,.75) 35%,rgba(8,8,26,0) 80%)'}}/>
+          <div style={{position:'absolute',right:0,top:0,bottom:0,width:640,
+            background:'linear-gradient(0deg,rgba(5,5,8,.9) 0%,transparent 40%)'}}/>
+        </>
+      )}
+
+      {/* Siello logo top-left */}
+      <div style={{position:'absolute',top:40,left:36,display:'flex',alignItems:'center',gap:12}}>
+        <img src={SIELLO_REPORT_URL} style={{height:38,objectFit:'contain'}}/>
+        <div style={{width:1,height:30,background:'rgba(245,166,35,.35)'}}/>
+        <div style={{fontSize:10,fontWeight:700,letterSpacing:'.22em',
+          color:'rgba(255,255,255,.45)',textTransform:'uppercase',lineHeight:1.4}}>
+          HIGHLIGHTS<br/>VIDEO
+        </div>
+      </div>
+
+      {/* Gold decorative lines */}
+      <div style={{position:'absolute',left:36,top:'50%',transform:'translateY(-50%)',
+        display:'flex',flexDirection:'column',gap:5}}>
+        {[56,36,18].map((w,i)=>(
+          <div key={i} style={{width:w,height:2,borderRadius:1,
+            background:`rgba(245,166,35,${[1,.55,.25][i]})`}}/>
+        ))}
+      </div>
+
+      {/* Main content */}
+      <div style={{position:'absolute',left:56,right:560,top:0,bottom:0,
+        display:'flex',flexDirection:'column',justifyContent:'center',paddingLeft:14}}>
+
+        {/* Position badge */}
+        {pos&&(
+          <div style={{display:'inline-flex',alignItems:'center',gap:7,
+            background:'rgba(245,166,35,.1)',border:'1px solid rgba(245,166,35,.28)',
+            borderRadius:5,padding:'5px 14px',marginBottom:22,alignSelf:'flex-start'}}>
+            <div style={{width:5,height:5,borderRadius:'50%',background:'#F5A623'}}/>
+            <span style={{fontSize:13,fontWeight:700,letterSpacing:'.16em',
+              textTransform:'uppercase',color:'#F5A623'}}>{pos}</span>
+          </div>
+        )}
+
+        {/* Name */}
+        <div style={{marginBottom:18,lineHeight:1}}>
+          {firstName&&(
+            <div style={{fontSize:88,fontWeight:900,letterSpacing:'-.03em',
+              color:'rgba(255,255,255,.92)',textShadow:'0 4px 48px rgba(0,0,0,.8)',
+              lineHeight:.9}}>{firstName}</div>
+          )}
+          {lastName&&(
+            <div style={{fontSize:88,fontWeight:900,letterSpacing:'-.03em',
+              color:'#F5A623',textShadow:'0 4px 48px rgba(0,0,0,.8)',
+              lineHeight:.95}}>{lastName}</div>
+          )}
+          {!firstName&&!lastName&&(
+            <div style={{fontSize:72,fontWeight:900,color:'rgba(255,255,255,.3)'}}>
+              {lang==='es'?'Nombre Jugador':'Player Name'}
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div style={{width:64,height:2,background:'rgba(245,166,35,.5)',
+          borderRadius:1,marginBottom:22}}/>
+
+        {/* Stats grid */}
+        <div style={{display:'flex',flexWrap:'wrap',gap:'16px 32px',marginBottom:18}}>
+          {dob&&(
+            <div>
+              <div style={{fontSize:8.5,fontWeight:700,letterSpacing:'.15em',
+                color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
+                {lang==='es'?'NACIMIENTO':'BORN'}
+              </div>
+              <div style={{fontSize:16,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+                {dob}{age?` · ${age} ${lang==='es'?'años':'yrs'}`:''}
+              </div>
+            </div>
+          )}
+          {(cover.height||cover.weight)&&(
+            <div>
+              <div style={{fontSize:8.5,fontWeight:700,letterSpacing:'.15em',
+                color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
+                {lang==='es'?'FÍSICO':'PHYSICAL'}
+              </div>
+              <div style={{fontSize:16,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+                {[cover.height&&`${cover.height} cm`,cover.weight&&`${cover.weight} kg`]
+                  .filter(Boolean).join(' / ')}
+              </div>
+            </div>
+          )}
+          {cover.nationality&&(
+            <div>
+              <div style={{fontSize:8.5,fontWeight:700,letterSpacing:'.15em',
+                color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
+                {lang==='es'?'NACIÓN':'NATION'}
+              </div>
+              <div style={{fontSize:16,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+                {cover.nationality}
+              </div>
+            </div>
+          )}
+          {cover.passport&&(
+            <div>
+              <div style={{fontSize:8.5,fontWeight:700,letterSpacing:'.15em',
+                color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
+                {lang==='es'?'PASAPORTE':'PASSPORT'}
+              </div>
+              <div style={{fontSize:16,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+                {cover.passport}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Clubs */}
+        {cover.clubs&&(
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <div style={{width:24,height:2,background:'rgba(245,166,35,.5)',borderRadius:1}}/>
+            <div style={{fontSize:13.5,fontWeight:600,
+              color:'rgba(255,255,255,.55)',letterSpacing:'.04em'}}>
+              {cover.clubs}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Watermark bottom-left */}
+      <div style={{position:'absolute',bottom:24,left:36,
+        fontSize:9,fontWeight:700,letterSpacing:'.22em',
+        color:'rgba(255,255,255,.15)',textTransform:'uppercase'}}>
+        SIELLO ACADEMY © {new Date().getFullYear()}
+      </div>
+    </div>
+  );
+}
+
+function CoverEditor({cover,onUpdate,lang}){
+  const [zoom,setZoom]=useState(.44);
+  function u(k){return e=>onUpdate({[k]:e?.target?.value??e})}
+  function uFile(file){
+    const r=new FileReader();
+    r.onload=ev=>onUpdate({photoUrl:ev.target.result});
+    r.readAsDataURL(file);
+  }
+  const L=lang==='es'?{
+    photo:'FOTO DEL JUGADOR',upload:'Subir foto',remove:'Quitar foto',
+    name:'NOMBRE COMPLETO',dob:'FECHA DE NACIMIENTO',nat:'NACIONALIDAD',
+    pos:'POSICIÓN',passport:'PASAPORTE',clubs:'CLUBES',h:'ALTURA (CM)',w:'PESO (KG)',
+    exportJpg:'Exportar JPG',
+  }:{
+    photo:'PLAYER PHOTO',upload:'Upload photo',remove:'Remove photo',
+    name:'FULL NAME',dob:'DATE OF BIRTH',nat:'NATIONALITY',
+    pos:'POSITION',passport:'PASSPORT',clubs:'CLUBS',h:'HEIGHT (CM)',w:'WEIGHT (KG)',
+    exportJpg:'Export JPG',
+  };
+  async function handleExportJpg(){
+    const el=document.getElementById('cover-16x9');
+    if(!el) return;
+    try{
+      if(window.htmlToImage){
+        const dataUrl=await window.htmlToImage.toJpeg(el,{quality:.95,pixelRatio:1.5});
+        const a=document.createElement('a');
+        a.href=dataUrl;
+        a.download=`portada-${(cover.playerName||'jugador').replace(/\s+/g,'-').toLowerCase()}.jpg`;
+        a.click();
+      }
+    }catch(e){console.error('export error',e);}
+  }
+  const photoInputId='cover-photo-input-'+cover.id;
+  return(
+    <div style={{display:'flex',height:'100%',overflow:'hidden'}}>
+      {/* Form panel */}
+      <div style={{flex:'0 0 300px',borderRight:'1px solid var(--border)',
+        overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:14}}>
+        {/* Photo */}
+        <div>
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:'.1em',
+            color:'var(--muted)',marginBottom:8}}>{L.photo}</div>
+          <div style={{display:'flex',gap:12,alignItems:'center'}}>
+            <div onClick={()=>document.getElementById(photoInputId).click()}
+              style={{width:80,height:80,borderRadius:8,overflow:'hidden',
+                background:'var(--surface3)',border:'2px dashed var(--border)',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                cursor:'pointer',flexShrink:0}}>
+              {cover.photoUrl
+                ? <img src={cover.photoUrl} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                : <div style={{fontSize:22,opacity:.25}}>[ ]</div>}
+            </div>
+            <input type="file" accept="image/*" id={photoInputId}
+              style={{display:'none'}}
+              onChange={e=>{const f=e.target.files?.[0];if(f)uFile(f);e.target.value='';}}/>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              <label htmlFor={photoInputId} className="btn-gold"
+                style={{fontSize:11,padding:'7px 12px',cursor:'pointer',
+                  display:'inline-block',textAlign:'center'}}>
+                {L.upload}
+              </label>
+              {cover.photoUrl&&(
+                <button className="btn-ghost" style={{fontSize:11,padding:'6px 10px'}}
+                  onClick={()=>onUpdate({photoUrl:null})}>
+                  {L.remove}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="card" style={{padding:14,display:'flex',flexDirection:'column',gap:11}}>
+          {[
+            {k:'playerName',l:L.name,ph:'Lionel Messi'},
+            {k:'dateOfBirth',l:L.dob,type:'date'},
+            {k:'nationality',l:L.nat,ph:'Argentina'},
+            {k:'passport',l:L.passport,ph:'Argentina / España'},
+            {k:'clubs',l:L.clubs,ph:'Inter Miami, FC Barcelona...'},
+            {k:'height',l:L.h,ph:'170',type:'number'},
+            {k:'weight',l:L.w,ph:'72',type:'number'},
+          ].map(({k,l,ph,type})=>(
+            <div key={k}>
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:'.08em',
+                color:'var(--muted)',marginBottom:4}}>{l}</div>
+              <input className="input-field" type={type||'text'}
+                value={cover[k]||''} onChange={u(k)} placeholder={ph||''}/>
+            </div>
+          ))}
+          <div>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:'.08em',
+              color:'var(--muted)',marginBottom:4}}>{L.pos}</div>
+            <select className="input-field" value={cover.position||''}
+              onChange={e=>onUpdate({position:e.target.value})}>
+              <option value="">—</option>
+              {POSITIONS.map(p=><option key={p} value={p}>{translatePos(lang,p)}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <button className="btn-gold" style={{padding:'11px',fontSize:13,fontWeight:700}}
+          onClick={handleExportJpg}>
+          {L.exportJpg}
+        </button>
+      </div>
+
+      {/* Preview panel */}
+      <div style={{flex:1,overflow:'hidden',background:'#030303',
+        display:'flex',flexDirection:'column'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',
+          gap:4,padding:'7px 10px',borderBottom:'1px solid var(--border)',
+          background:'var(--surface)',flexShrink:0}}>
+          <button className="btn-ghost" style={{width:24,height:24,padding:0,fontSize:13,lineHeight:1}}
+            onClick={()=>setZoom(z=>Math.max(.15,+(z-.06).toFixed(2)))}>−</button>
+          <span style={{fontSize:10,color:'var(--muted)',width:34,textAlign:'center'}}>
+            {Math.round(zoom*100)}%
+          </span>
+          <button className="btn-ghost" style={{width:24,height:24,padding:0,fontSize:13,lineHeight:1}}
+            onClick={()=>setZoom(z=>Math.min(1,+(z+.06).toFixed(2)))}>+</button>
+        </div>
+        <div style={{flex:1,overflowY:'auto',padding:24,
+          display:'flex',justifyContent:'center',alignItems:'flex-start'}}>
+          <div style={{zoom,flexShrink:0}}>
+            <CoverPreview16x9 cover={cover} lang={lang}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoversHub({covers,onNew,onOpen,onDelete,lang}){
+  const L=lang==='es'?{
+    title:'PORTADAS',sub:'portadas activas',new:'Nueva Portada',
+    empty:'Sin portadas',emptySub:'Creá tu primera portada de highlights 16:9',
+    create:'Crear Portada',del:'¿Eliminar portada?',
+  }:{
+    title:'COVERS',sub:'active covers',new:'New Cover',
+    empty:'No covers',emptySub:'Create your first 16:9 highlight cover',
+    create:'Create Cover',del:'Delete cover?',
+  };
+  return(
+    <div style={{flex:1,overflowY:'auto'}}>
+      <div style={{padding:'28px 32px'}}>
+        <div style={{display:'flex',alignItems:'flex-start',
+          justifyContent:'space-between',marginBottom:24}}>
+          <div>
+            <h1 style={{fontSize:13,fontWeight:800,letterSpacing:'.18em',
+              textTransform:'uppercase',color:'var(--text)',marginBottom:3}}>{L.title}</h1>
+            <p style={{fontSize:12,color:'var(--dim)'}}>{covers.length} {L.sub}</p>
+          </div>
+          <button className="btn-gold" style={{padding:'8px 18px',fontSize:12,fontWeight:700,
+            display:'flex',alignItems:'center',gap:6}} onClick={onNew}>
+            <span style={{fontSize:16,lineHeight:1}}>+</span>{L.new}
+          </button>
+        </div>
+
+        {covers.length===0?(
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',
+            justifyContent:'center',padding:'64px 0',gap:16}}>
+            <div style={{width:60,height:60,borderRadius:12,background:'var(--surface3)',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:24,color:'var(--dim)'}}>▶</div>
+            <div style={{textAlign:'center'}}>
+              <div style={{fontSize:15,fontWeight:700,marginBottom:6}}>{L.empty}</div>
+              <div style={{fontSize:12,color:'var(--muted)',marginBottom:16}}>{L.emptySub}</div>
+              <button className="btn-gold" style={{padding:'9px 22px',fontSize:12}}
+                onClick={onNew}>{L.create}</button>
+            </div>
+          </div>
+        ):(
+          <div style={{display:'grid',
+            gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:16}}>
+            {covers.map(c=>(
+              <div key={c.id} onClick={()=>onOpen(c.id)}
+                style={{background:'var(--surface)',border:'1px solid var(--border)',
+                  borderRadius:10,overflow:'hidden',cursor:'pointer',transition:'border-color .15s'}}
+                onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(245,166,35,.45)'}
+                onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}>
+                {/* 16:9 thumbnail */}
+                <div style={{position:'relative',paddingTop:'56.25%',
+                  background:'#050508',overflow:'hidden'}}>
+                  {c.photoUrl&&(
+                    <img src={c.photoUrl}
+                      style={{position:'absolute',inset:0,width:'100%',height:'100%',
+                        objectFit:'cover',opacity:.55}}/>
+                  )}
+                  <div style={{position:'absolute',inset:0,
+                    background:'linear-gradient(120deg,rgba(5,5,8,.96) 0%,rgba(5,5,8,.6) 65%,transparent 100%)'}}/>
+                  <div style={{position:'absolute',left:0,top:0,bottom:0,width:3,
+                    background:'linear-gradient(180deg,#F5A623,#FB923C)'}}/>
+                  <div style={{position:'absolute',left:12,bottom:12}}>
+                    <div style={{fontSize:13,fontWeight:800,color:'#fff',lineHeight:1.25}}>
+                      {c.playerName||(lang==='es'?'Sin nombre':'No name')}
+                    </div>
+                    {c.position&&(
+                      <div style={{fontSize:10,color:'#F5A623',fontWeight:700,marginTop:3}}>
+                        {translatePos(lang,c.position)}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{position:'absolute',right:10,top:10}}>
+                    <div style={{fontSize:8,fontWeight:700,letterSpacing:'.12em',
+                      color:'rgba(255,255,255,.3)',textTransform:'uppercase'}}>16:9</div>
+                  </div>
+                </div>
+                <div style={{padding:'10px 12px',display:'flex',
+                  alignItems:'center',justifyContent:'space-between'}}>
+                  <div style={{fontSize:10,color:'var(--muted)'}}>
+                    {fmtDateNum(c.createdAt?.split('T')[0])}
+                  </div>
+                  <button onClick={e=>{e.stopPropagation();
+                    if(confirm(L.del)) onDelete(c.id)}}
+                    style={{background:'none',border:'none',cursor:'pointer',
+                      color:'var(--dim)',fontSize:17,padding:'2px 5px',lineHeight:1}}
+                    onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                    onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>×</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function App(){
   const [lang,setLang]=useState('es');
   const [view,setView]=useState('dashboard');
@@ -1816,9 +2236,28 @@ function App(){
   const [currentId,setCurrentId]=useState(null);
   const [branding,setBranding]=useState(()=>loadBranding());
   const [previewZoom,setPreviewZoom]=useState(.46);
+  const [covers,setCovers]=useState(()=>loadCovers());
+  const [coverId,setCoverId]=useState(null);
 
   const current=reports.find(r=>r.id===currentId)||null;
-  const activeSection=view==='dashboard'?'dashboard':null;
+  const currentCover=covers.find(c=>c.id===coverId)||null;
+  const activeSection=view==='dashboard'?'dashboard':view==='covers'||view==='coveredit'?'covers':null;
+
+  function handleNewCover(){
+    const c=newCover(); const next=[c,...covers];
+    setCovers(next); saveCovers(next);
+    setCoverId(c.id); setView('coveredit');
+  }
+  function handleOpenCover(id){setCoverId(id);setView('coveredit');}
+  function handleDeleteCover(id){
+    const next=covers.filter(c=>c.id!==id);
+    setCovers(next); saveCovers(next);
+    if(coverId===id){setCoverId(null);setView('covers');}
+  }
+  function handleCoverUpdate(updates){
+    const next=covers.map(c=>c.id===coverId?{...c,...updates}:c);
+    setCovers(next); saveCovers(next);
+  }
 
   function handleBrandingChange(next){
     setBranding(next);
@@ -1850,7 +2289,8 @@ function App(){
 
   return(
     <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
-      <Sidebar activeSection={activeSection} onNav={handleNav} lang={lang} setLang={setLang}/>
+      <Sidebar activeSection={activeSection} onNav={handleNav}
+        onNavCovers={()=>setView('covers')} lang={lang} setLang={setLang}/>
       <main style={{flex:1,marginLeft:58,height:'100%',overflow:'hidden',
         display:'flex',flexDirection:'column'}}>
 
@@ -1858,6 +2298,44 @@ function App(){
           <ReportsHub reports={reports} lang={lang} branding={branding}
             tab={dashboardTab} onTabChange={setDashboardTab}
             onNew={handleNew} onOpen={handleOpen} onDelete={handleDelete}/>
+        )}
+
+        {view==='covers'&&(
+          <CoversHub covers={covers} lang={lang}
+            onNew={handleNewCover} onOpen={handleOpenCover} onDelete={handleDeleteCover}/>
+        )}
+
+        {view==='coveredit'&&currentCover&&(
+          <>
+            <div style={{display:'flex',alignItems:'center',gap:10,
+              padding:'9px 17px',borderBottom:'1px solid var(--border)',
+              background:'var(--surface)',flexShrink:0}}>
+              <button className="btn-ghost" style={{padding:'5px 11px',fontSize:11}}
+                onClick={()=>setView('covers')}>
+                &larr; {lang==='es'?'Portadas':'Covers'}
+              </button>
+              <div style={{width:1,height:16,background:'var(--border)'}}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,
+                  overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {currentCover.playerName||(lang==='es'?'Nueva Portada':'New Cover')}
+                </div>
+                {currentCover.position&&(
+                  <div style={{fontSize:10,color:'var(--muted)'}}>
+                    {translatePos(lang,currentCover.position)}
+                  </div>
+                )}
+              </div>
+              <span style={{fontSize:10,fontWeight:700,letterSpacing:'.12em',
+                color:'var(--muted)',textTransform:'uppercase',padding:'4px 10px',
+                border:'1px solid var(--border)',borderRadius:5}}>
+                16:9
+              </span>
+            </div>
+            <div style={{flex:1,overflow:'hidden'}}>
+              <CoverEditor cover={currentCover} onUpdate={handleCoverUpdate} lang={lang}/>
+            </div>
+          </>
         )}
 
         {(view==='form'||view==='preview')&&current&&(
