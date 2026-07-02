@@ -1825,6 +1825,7 @@ function newCover(){
   return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     playerName:'',dateOfBirth:'',nationality:'',position:'',
     foot:'',passport:'',height:'',weight:'',photoUrl:null,
+    photoX:50,photoY:30,
     clubHistory:[],
     createdAt:new Date().toISOString()};
 }
@@ -1862,21 +1863,19 @@ function CoverPreview16x9({cover,lang}){
       <div style={{position:'absolute',bottom:0,left:0,right:0,height:2,
         background:'rgba(245,166,35,.35)'}}/>
 
-      {/* Player photo - full background, fades smoothly to the left */}
+      {/* Player photo - right side with smooth left fade */}
       {cover.photoUrl&&(
         <>
-          <div style={{position:'absolute',inset:0,
+          <div style={{position:'absolute',right:0,top:0,bottom:0,width:700,
             backgroundImage:`url(${cover.photoUrl})`,
-            backgroundSize:'cover',backgroundPosition:'right center'}}/>
-          {/* Main fade: left side black, right side shows photo */}
-          <div style={{position:'absolute',inset:0,
-            background:'linear-gradient(90deg,#0A0A0A 0%,#0A0A0A 28%,rgba(10,10,10,.88) 42%,rgba(10,10,10,.5) 58%,rgba(10,10,10,.15) 78%,rgba(10,10,10,.05) 100%)'}}/>
-          {/* Bottom dark vignette for readability */}
-          <div style={{position:'absolute',inset:0,
-            background:'linear-gradient(0deg,rgba(0,0,0,.7) 0%,transparent 45%)'}}/>
-          {/* Top dark vignette */}
-          <div style={{position:'absolute',inset:0,
-            background:'linear-gradient(180deg,rgba(0,0,0,.4) 0%,transparent 30%)'}}/>
+            backgroundSize:'cover',
+            backgroundPosition:`${cover.photoX??50}% ${cover.photoY??30}%`}}/>
+          {/* Smooth fade from black into the photo */}
+          <div style={{position:'absolute',right:0,top:0,bottom:0,width:700,
+            background:'linear-gradient(90deg,#0A0A0A 0%,rgba(10,10,10,.75) 22%,rgba(10,10,10,.3) 50%,rgba(10,10,10,.05) 80%,transparent 100%)'}}/>
+          {/* Bottom vignette */}
+          <div style={{position:'absolute',right:0,top:0,bottom:0,width:700,
+            background:'linear-gradient(0deg,rgba(0,0,0,.65) 0%,transparent 45%)'}}/>
         </>
       )}
 
@@ -2095,12 +2094,30 @@ function CoverEditor({cover,onUpdate,lang}){
               </label>
               {cover.photoUrl&&(
                 <button className="btn-ghost" style={{fontSize:11,padding:'6px 10px'}}
-                  onClick={()=>onUpdate({photoUrl:null})}>
+                  onClick={()=>onUpdate({photoUrl:null,photoX:50,photoY:30})}>
                   {L.remove}
                 </button>
               )}
             </div>
           </div>
+          {cover.photoUrl&&(
+            <div style={{marginTop:12,display:'flex',flexDirection:'column',gap:8}}>
+              <div style={{fontSize:9,fontWeight:700,letterSpacing:'.1em',color:'var(--muted)'}}>
+                {lang==='es'?'POSICIÓN DE LA FOTO':'PHOTO POSITION'}
+              </div>
+              {[
+                {label:lang==='es'?'Horizontal':'Horizontal',key:'photoX',val:cover.photoX??50},
+                {label:lang==='es'?'Vertical':'Vertical',key:'photoY',val:cover.photoY??30},
+              ].map(({label,key,val})=>(
+                <div key={key} style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontSize:10,color:'var(--muted)',width:60,flexShrink:0}}>{label}</span>
+                  <input type="range" min="0" max="100" value={val}
+                    style={{flex:1,accentColor:'#F5A623'}}
+                    onChange={e=>onUpdate({[key]:Number(e.target.value)})}/>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="card" style={{padding:14,display:'flex',flexDirection:'column',gap:11}}>
