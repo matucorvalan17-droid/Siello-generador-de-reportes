@@ -1890,14 +1890,6 @@ function CoverPreview16x9({cover,lang}){
         </div>
       </div>
 
-      {/* Gold decorative lines */}
-      <div style={{position:'absolute',left:36,top:'50%',transform:'translateY(-50%)',
-        display:'flex',flexDirection:'column',gap:5}}>
-        {[56,36,18].map((w,i)=>(
-          <div key={i} style={{width:w,height:2,borderRadius:1,
-            background:`rgba(245,166,35,${[1,.55,.25][i]})`}}/>
-        ))}
-      </div>
 
       {/* Main content */}
       <div style={{position:'absolute',left:56,right:560,top:0,bottom:0,
