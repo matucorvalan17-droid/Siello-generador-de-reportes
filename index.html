@@ -1850,24 +1850,21 @@ function CoverPreview16x9({cover,lang}){
         backgroundImage:'linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),'+
           'linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)',
         backgroundSize:'60px 60px'}}/>
-      {/* Player photo - right side with smooth left fade */}
+      {/* Player photo - full canvas, gradient overlay kills left side seamlessly */}
       {cover.photoUrl&&(
         <>
-          <div style={{position:'absolute',right:0,top:0,bottom:0,width:700,
+          <div style={{position:'absolute',inset:0,
             backgroundImage:`url(${cover.photoUrl})`,
             backgroundSize:'cover',
             backgroundPosition:`${cover.photoX??50}% ${cover.photoY??30}%`}}/>
-          {/* Smooth fade from black into the photo — starts solid to cover the seam */}
-          <div style={{position:'absolute',right:0,top:0,bottom:0,width:760,
-            background:'linear-gradient(90deg,#000 0%,#000 12%,rgba(0,0,0,.9) 22%,rgba(0,0,0,.5) 48%,rgba(0,0,0,.08) 80%,transparent 100%)'}}/>
+          {/* Single full-width overlay: pure black left, fades to transparent right */}
+          <div style={{position:'absolute',inset:0,
+            background:'linear-gradient(90deg,#000 0%,#000 42%,rgba(0,0,0,.85) 55%,rgba(0,0,0,.35) 72%,rgba(0,0,0,.05) 90%,transparent 100%)'}}/>
           {/* Bottom vignette */}
-          <div style={{position:'absolute',right:0,top:0,bottom:0,width:700,
-            background:'linear-gradient(0deg,rgba(0,0,0,.65) 0%,transparent 45%)'}}/>
+          <div style={{position:'absolute',inset:0,
+            background:'linear-gradient(0deg,rgba(0,0,0,.65) 0%,transparent 40%)'}}/>
         </>
       )}
-
-      {/* Solid black panel behind text area — extends past photo edge to kill the seam */}
-      <div style={{position:'absolute',left:0,top:0,bottom:0,width:620,background:'#000'}}/>
 
       {/* Gold borders — rendered above photo */}
       {/* Left gold accent bar */}
@@ -1937,7 +1934,7 @@ function CoverPreview16x9({cover,lang}){
                 color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
                 {lang==='es'?'NACIMIENTO':'BORN'}
               </div>
-              <div style={{fontSize:19,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+              <div style={{fontSize:23,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
                 {dob}{age?` · ${age} ${lang==='es'?'años':'yrs'}`:''}
               </div>
             </div>
@@ -1948,7 +1945,7 @@ function CoverPreview16x9({cover,lang}){
                 color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
                 {lang==='es'?'FÍSICO':'PHYSICAL'}
               </div>
-              <div style={{fontSize:19,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+              <div style={{fontSize:23,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
                 {[cover.height&&`${cover.height} cm`,cover.weight&&`${cover.weight} kg`]
                   .filter(Boolean).join(' / ')}
               </div>
@@ -1960,7 +1957,7 @@ function CoverPreview16x9({cover,lang}){
                 color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
                 {lang==='es'?'NACIONALIDAD':'NATIONALITY'}
               </div>
-              <div style={{fontSize:19,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+              <div style={{fontSize:23,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
                 {cover.nationality}
               </div>
             </div>
@@ -1971,7 +1968,7 @@ function CoverPreview16x9({cover,lang}){
                 color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
                 {lang==='es'?'PASAPORTE':'PASSPORT'}
               </div>
-              <div style={{fontSize:19,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+              <div style={{fontSize:23,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
                 {cover.passport}
               </div>
             </div>
@@ -1982,7 +1979,7 @@ function CoverPreview16x9({cover,lang}){
                 color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
                 {lang==='es'?'PIE HÁBIL':'DOMINANT FOOT'}
               </div>
-              <div style={{fontSize:19,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+              <div style={{fontSize:23,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
                 {lang==='es'
                   ? cover.foot
                   : cover.foot==='Diestro'?'Right':cover.foot==='Zurdo'?'Left':'Both'}
@@ -1998,12 +1995,12 @@ function CoverPreview16x9({cover,lang}){
               <div key={i} style={{display:'flex',alignItems:'center',gap:10}}>
                 <div style={{width:i===0?24:14,height:2,
                   background:`rgba(245,166,35,${i===0?.5:.25})`,borderRadius:1,flexShrink:0}}/>
-                <div style={{fontSize:i===0?17:15,fontWeight:i===0?700:600,
+                <div style={{fontSize:i===0?20:18,fontWeight:i===0?700:600,
                   color:`rgba(255,255,255,${i===0?.75:.5})`,letterSpacing:'.03em',
                   display:'flex',alignItems:'baseline',gap:7}}>
                   <span>{entry.club}</span>
                   {entry.seasons&&(
-                    <span style={{fontSize:12.5,color:'rgba(245,166,35,.65)',fontWeight:700}}>
+                    <span style={{fontSize:14,color:'rgba(245,166,35,.65)',fontWeight:700}}>
                       {entry.seasons}
                     </span>
                   )}
