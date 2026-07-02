@@ -1855,23 +1855,28 @@ function CoverPreview16x9({cover,lang}){
       {/* Right gold bar */}
       <div style={{position:'absolute',right:0,top:0,bottom:0,width:3,
         background:'rgba(245,166,35,.15)'}}/>
-      {/* Top line */}
+      {/* Top line - full width solid gold */}
       <div style={{position:'absolute',top:0,left:0,right:0,height:3,
-        background:'linear-gradient(90deg,#F5A623,rgba(245,166,35,.2))'}}/>
+        background:'#F5A623'}}/>
       {/* Bottom line */}
       <div style={{position:'absolute',bottom:0,left:0,right:0,height:2,
-        background:'linear-gradient(90deg,rgba(245,166,35,.4),rgba(245,166,35,.05))'}}/>
+        background:'rgba(245,166,35,.35)'}}/>
 
-      {/* Player photo right */}
+      {/* Player photo - full background, fades smoothly to the left */}
       {cover.photoUrl&&(
         <>
-          <div style={{position:'absolute',right:0,top:0,bottom:0,width:640,
+          <div style={{position:'absolute',inset:0,
             backgroundImage:`url(${cover.photoUrl})`,
-            backgroundSize:'cover',backgroundPosition:'center top'}}/>
-          <div style={{position:'absolute',right:0,top:0,bottom:0,width:640,
-            background:'linear-gradient(90deg,#0A0A0A 0%,rgba(10,10,10,.8) 35%,rgba(10,10,10,.1) 80%)'}}/>
-          <div style={{position:'absolute',right:0,top:0,bottom:0,width:640,
-            background:'linear-gradient(0deg,rgba(8,8,26,.85) 0%,transparent 40%)'}}/>
+            backgroundSize:'cover',backgroundPosition:'right center'}}/>
+          {/* Main fade: left side black, right side shows photo */}
+          <div style={{position:'absolute',inset:0,
+            background:'linear-gradient(90deg,#0A0A0A 0%,#0A0A0A 28%,rgba(10,10,10,.88) 42%,rgba(10,10,10,.5) 58%,rgba(10,10,10,.15) 78%,rgba(10,10,10,.05) 100%)'}}/>
+          {/* Bottom dark vignette for readability */}
+          <div style={{position:'absolute',inset:0,
+            background:'linear-gradient(0deg,rgba(0,0,0,.7) 0%,transparent 45%)'}}/>
+          {/* Top dark vignette */}
+          <div style={{position:'absolute',inset:0,
+            background:'linear-gradient(180deg,rgba(0,0,0,.4) 0%,transparent 30%)'}}/>
         </>
       )}
 
