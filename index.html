@@ -1850,19 +1850,6 @@ function CoverPreview16x9({cover,lang}){
         backgroundImage:'linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),'+
           'linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)',
         backgroundSize:'60px 60px'}}/>
-      {/* Left gold accent bar */}
-      <div style={{position:'absolute',left:0,top:0,bottom:0,width:6,
-        background:'linear-gradient(180deg,#F5A623 0%,#FB923C 60%,rgba(251,146,60,.2) 100%)'}}/>
-      {/* Right gold bar */}
-      <div style={{position:'absolute',right:0,top:0,bottom:0,width:3,
-        background:'rgba(245,166,35,.15)'}}/>
-      {/* Top line - full width solid gold */}
-      <div style={{position:'absolute',top:0,left:0,right:0,height:3,
-        background:'#F5A623'}}/>
-      {/* Bottom line */}
-      <div style={{position:'absolute',bottom:0,left:0,right:0,height:2,
-        background:'rgba(245,166,35,.35)'}}/>
-
       {/* Player photo - right side with smooth left fade */}
       {cover.photoUrl&&(
         <>
@@ -1872,12 +1859,26 @@ function CoverPreview16x9({cover,lang}){
             backgroundPosition:`${cover.photoX??50}% ${cover.photoY??30}%`}}/>
           {/* Smooth fade from black into the photo */}
           <div style={{position:'absolute',right:0,top:0,bottom:0,width:700,
-            background:'linear-gradient(90deg,#0A0A0A 0%,rgba(10,10,10,.75) 22%,rgba(10,10,10,.3) 50%,rgba(10,10,10,.05) 80%,transparent 100%)'}}/>
+            background:'linear-gradient(90deg,#000 0%,rgba(0,0,0,.85) 18%,rgba(0,0,0,.4) 45%,rgba(0,0,0,.05) 80%,transparent 100%)'}}/>
           {/* Bottom vignette */}
           <div style={{position:'absolute',right:0,top:0,bottom:0,width:700,
             background:'linear-gradient(0deg,rgba(0,0,0,.65) 0%,transparent 45%)'}}/>
         </>
       )}
+
+      {/* Solid black panel behind text area */}
+      <div style={{position:'absolute',left:0,top:0,bottom:0,width:560,background:'#000'}}/>
+
+      {/* Gold borders — rendered above photo */}
+      {/* Left gold accent bar */}
+      <div style={{position:'absolute',left:0,top:0,bottom:0,width:6,zIndex:2,
+        background:'linear-gradient(180deg,#F5A623 0%,#FB923C 60%,rgba(251,146,60,.2) 100%)'}}/>
+      {/* Top line - full width solid gold */}
+      <div style={{position:'absolute',top:0,left:0,right:0,height:3,zIndex:2,
+        background:'#F5A623'}}/>
+      {/* Bottom line */}
+      <div style={{position:'absolute',bottom:0,left:0,right:0,height:2,zIndex:2,
+        background:'rgba(245,166,35,.5)'}}/>
 
       {/* Siello logo top-left */}
       <div style={{position:'absolute',top:40,left:36,display:'flex',alignItems:'center',gap:12}}>
