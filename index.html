@@ -1824,7 +1824,8 @@ function saveCovers(c){localStorage.setItem(CK,JSON.stringify(c))}
 function newCover(){
   return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     playerName:'',dateOfBirth:'',nationality:'',position:'',
-    passport:'',clubs:'',height:'',weight:'',photoUrl:null,
+    foot:'',passport:'',height:'',weight:'',photoUrl:null,
+    clubHistory:[],
     createdAt:new Date().toISOString()};
 }
 
@@ -1842,7 +1843,7 @@ function CoverPreview16x9({cover,lang}){
       color:'#fff',userSelect:'none',flexShrink:0}}>
       {/* Background */}
       <div style={{position:'absolute',inset:0,
-        background:'linear-gradient(125deg,#08081A 0%,#0D0D28 45%,#050508 100%)'}}/>
+        background:'linear-gradient(125deg,#08081A 0%,#0D0D28 50%,#0A0A20 100%)'}}/>
       {/* Subtle grid overlay */}
       <div style={{position:'absolute',inset:0,opacity:.04,
         backgroundImage:'linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),'+
@@ -1868,9 +1869,9 @@ function CoverPreview16x9({cover,lang}){
             backgroundImage:`url(${cover.photoUrl})`,
             backgroundSize:'cover',backgroundPosition:'center top'}}/>
           <div style={{position:'absolute',right:0,top:0,bottom:0,width:640,
-            background:'linear-gradient(90deg,#08081A 0%,rgba(8,8,26,.75) 35%,rgba(8,8,26,0) 80%)'}}/>
+            background:'linear-gradient(90deg,#08081A 0%,rgba(8,8,26,.8) 35%,rgba(8,8,26,.1) 80%)'}}/>
           <div style={{position:'absolute',right:0,top:0,bottom:0,width:640,
-            background:'linear-gradient(0deg,rgba(5,5,8,.9) 0%,transparent 40%)'}}/>
+            background:'linear-gradient(0deg,rgba(8,8,26,.85) 0%,transparent 40%)'}}/>
         </>
       )}
 
@@ -1978,16 +1979,40 @@ function CoverPreview16x9({cover,lang}){
               </div>
             </div>
           )}
+          {cover.foot&&(
+            <div>
+              <div style={{fontSize:8.5,fontWeight:700,letterSpacing:'.15em',
+                color:'rgba(255,255,255,.35)',textTransform:'uppercase',marginBottom:5}}>
+                {lang==='es'?'PIE HÁBIL':'DOMINANT FOOT'}
+              </div>
+              <div style={{fontSize:16,fontWeight:700,color:'rgba(255,255,255,.85)'}}>
+                {lang==='es'
+                  ? cover.foot
+                  : cover.foot==='Diestro'?'Right':cover.foot==='Zurdo'?'Left':'Both'}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Clubs */}
-        {cover.clubs&&(
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <div style={{width:24,height:2,background:'rgba(245,166,35,.5)',borderRadius:1}}/>
-            <div style={{fontSize:13.5,fontWeight:600,
-              color:'rgba(255,255,255,.55)',letterSpacing:'.04em'}}>
-              {cover.clubs}
-            </div>
+        {/* Club history */}
+        {(cover.clubHistory||[]).length>0&&(
+          <div style={{display:'flex',flexDirection:'column',gap:5}}>
+            {(cover.clubHistory||[]).map((entry,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:10}}>
+                <div style={{width:i===0?24:14,height:2,
+                  background:`rgba(245,166,35,${i===0?.5:.25})`,borderRadius:1,flexShrink:0}}/>
+                <div style={{fontSize:i===0?14:12.5,fontWeight:i===0?700:600,
+                  color:`rgba(255,255,255,${i===0?.65:.4})`,letterSpacing:'.03em',
+                  display:'flex',alignItems:'baseline',gap:7}}>
+                  <span>{entry.club}</span>
+                  {entry.seasons&&(
+                    <span style={{fontSize:10.5,color:'rgba(245,166,35,.55)',fontWeight:700}}>
+                      {entry.seasons}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -2013,12 +2038,20 @@ function CoverEditor({cover,onUpdate,lang}){
   const L=lang==='es'?{
     photo:'FOTO DEL JUGADOR',upload:'Subir foto',remove:'Quitar foto',
     name:'NOMBRE COMPLETO',dob:'FECHA DE NACIMIENTO',nat:'NACIONALIDAD',
-    pos:'POSICIÓN',passport:'PASAPORTE',clubs:'CLUBES',h:'ALTURA (CM)',w:'PESO (KG)',
+    pos:'POSICIÓN',passport:'PASAPORTE',foot:'PIE HÁBIL',
+    h:'ALTURA (CM)',w:'PESO (KG)',
+    clubs:'CLUBES',clubPh:'Club',seasonsPh:'Temporadas (ej: 2021-2024)',
+    addClub:'+ Agregar club',removeClub:'×',
+    footOpts:['Diestro','Zurdo','Ambidiestro'],
     exportJpg:'Exportar JPG',
   }:{
     photo:'PLAYER PHOTO',upload:'Upload photo',remove:'Remove photo',
     name:'FULL NAME',dob:'DATE OF BIRTH',nat:'NATIONALITY',
-    pos:'POSITION',passport:'PASSPORT',clubs:'CLUBS',h:'HEIGHT (CM)',w:'WEIGHT (KG)',
+    pos:'POSITION',passport:'PASSPORT',foot:'DOMINANT FOOT',
+    h:'HEIGHT (CM)',w:'WEIGHT (KG)',
+    clubs:'CLUBS',clubPh:'Club',seasonsPh:'Seasons (e.g. 2021-2024)',
+    addClub:'+ Add club',removeClub:'×',
+    footOpts:['Diestro','Zurdo','Ambidiestro'],
     exportJpg:'Export JPG',
   };
   async function handleExportJpg(){
@@ -2079,7 +2112,6 @@ function CoverEditor({cover,onUpdate,lang}){
             {k:'dateOfBirth',l:L.dob,type:'date'},
             {k:'nationality',l:L.nat,ph:'Argentina'},
             {k:'passport',l:L.passport,ph:'Argentina / España'},
-            {k:'clubs',l:L.clubs,ph:'Inter Miami, FC Barcelona...'},
             {k:'height',l:L.h,ph:'170',type:'number'},
             {k:'weight',l:L.w,ph:'72',type:'number'},
           ].map(({k,l,ph,type})=>(
@@ -2099,6 +2131,57 @@ function CoverEditor({cover,onUpdate,lang}){
               {POSITIONS.map(p=><option key={p} value={p}>{translatePos(lang,p)}</option>)}
             </select>
           </div>
+          <div>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:'.08em',
+              color:'var(--muted)',marginBottom:4}}>{L.foot}</div>
+            <select className="input-field" value={cover.foot||''}
+              onChange={e=>onUpdate({foot:e.target.value})}>
+              <option value="">—</option>
+              {L.footOpts.map(f=><option key={f} value={f}>{f}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Club history */}
+        <div className="card" style={{padding:14}}>
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:'.08em',
+            color:'var(--muted)',marginBottom:10}}>{L.clubs}</div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {(cover.clubHistory||[]).map((entry,i)=>(
+              <div key={i} style={{display:'flex',gap:6,alignItems:'flex-start'}}>
+                <div style={{flex:1,display:'flex',flexDirection:'column',gap:4}}>
+                  <input className="input-field" style={{fontSize:11}}
+                    placeholder={L.clubPh} value={entry.club||''}
+                    onChange={e=>{
+                      const next=(cover.clubHistory||[]).map((c,j)=>j===i?{...c,club:e.target.value}:c);
+                      onUpdate({clubHistory:next});
+                    }}/>
+                  <input className="input-field" style={{fontSize:11}}
+                    placeholder={L.seasonsPh} value={entry.seasons||''}
+                    onChange={e=>{
+                      const next=(cover.clubHistory||[]).map((c,j)=>j===i?{...c,seasons:e.target.value}:c);
+                      onUpdate({clubHistory:next});
+                    }}/>
+                </div>
+                <button onClick={()=>{
+                    const next=(cover.clubHistory||[]).filter((_,j)=>j!==i);
+                    onUpdate({clubHistory:next});
+                  }}
+                  style={{background:'none',border:'none',cursor:'pointer',
+                    color:'var(--dim)',fontSize:18,padding:'4px 6px',lineHeight:1,
+                    marginTop:2,flexShrink:0}}
+                  onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                  onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>
+                  {L.removeClub}
+                </button>
+              </div>
+            ))}
+          </div>
+          <button className="btn-ghost" style={{marginTop:10,width:'100%',
+            fontSize:11,padding:'7px',fontWeight:700}}
+            onClick={()=>onUpdate({clubHistory:[...(cover.clubHistory||[]),{club:'',seasons:''}]})}>
+            {L.addClub}
+          </button>
         </div>
 
         <button className="btn-gold" style={{padding:'11px',fontSize:13,fontWeight:700}}
