@@ -1136,7 +1136,7 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
   const isCustom=report.brand==='custom';
   const accent=isCustom?(branding?.borderColor||'#F5A623'):'#F5A623';
   const primaryLogo=isCustom?(branding?.logo1Url||SIELLO_REPORT_URL):SIELLO_REPORT_URL;
-  const secondaryLogo=isCustom?(branding?.logo2Url||null):NIKE_URL;
+  const secondaryLogo=isCustom?(branding?.logo2Url||null):null;
   const secondaryLogoFilter=isCustom?'none':'brightness(0) invert(1)';
   const logo1Scale=isCustom?(branding?.logo1Scale||1):1;
   const logo2Scale=isCustom?(branding?.logo2Scale||1):1;
