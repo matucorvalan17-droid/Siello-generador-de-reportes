@@ -380,7 +380,7 @@ function newReport(brand='siello'){
     executiveSummary:'',conclusionNotas:'',
     suggestedTeams:[],
     customAttrConfig:null,
-    available:'',budget:'',
+    available:'',budget:'',gpa:'',
     hidePerformanceLabel:false,
     trayectoria:{enabled:false,clubs:[],logros:[]}};
 }
@@ -853,6 +853,7 @@ function Step1({report,onChange,lang}){
           <div><Lbl text={L.name}/><input className="input-field" value={report.playerName} onChange={u('playerName')} placeholder="Carlos García"/></div>
           <div><Lbl text={L.available}/><input className="input-field" value={report.available||''} onChange={u('available')} placeholder={lang==='es'?'Ej: Spring 2026':'E.g. Spring 2026'}/></div>
           <div><Lbl text={L.budget}/><input className="input-field" value={report.budget||''} onChange={u('budget')} placeholder={lang==='es'?'Ej: $500k - $1M':'E.g. $500k - $1M'}/></div>
+          <div><Lbl text="GPA"/><input className="input-field" value={report.gpa||''} onChange={u('gpa')} placeholder="3.8" inputMode="decimal" pattern="[0-9.]*"/></div>
           <div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
               <Lbl text={L.h}/>
@@ -1912,13 +1913,14 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
           <div style={{padding:'28px 34px 40px',background:P.bg}}>
 
             {/* Club + available/budget row */}
-            {(report.currentClub||report.available||report.budget)&&(
+            {(report.currentClub||report.available||report.budget||report.gpa)&&(
               <div style={{display:'flex',gap:0,marginBottom:28,borderRadius:8,
                 overflow:'hidden',border:`1px solid ${P.border}`,background:P.surface}}>
                 {[
                   report.currentClub&&{label:lang==='es'?'CLUB ACTUAL':'CURRENT CLUB',value:report.currentClub,c:accent,logo:report.clubLogo||null},
                   report.available&&{label:lang==='es'?'DISPONIBLE':'AVAILABLE',value:report.available,c:'#34D399'},
                   report.budget&&{label:lang==='es'?'PRESUPUESTO':'BUDGET',value:report.budget,c:'#60A5FA'},
+                  report.gpa&&{label:'GPA',value:report.gpa,c:'#A78BFA'},
                   !isCustom&&report.evaluationDate&&{label:lang==='es'?'FECHA':'DATE',value:fmtDateNum(report.evaluationDate),c:P.faint},
                 ].filter(Boolean).map((f,idx,arr)=>(
                   <div key={f.label} style={{flex:1,padding:'14px 18px',
