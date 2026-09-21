@@ -371,7 +371,7 @@ function newReport(brand='siello'){
   const id=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now();
   return{id,brand,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),
     playerName:'',dateOfBirth:'',nationality:'',position:'',secondaryPosition:'',
-    dominantFoot:'Diestro',height:'',weight:'',currentClub:'',
+    dominantFoot:'Diestro',height:'',weight:'',heightUnit:'cm',weightUnit:'kg',currentClub:'',
     evaluationDate:new Date().toISOString().split('T')[0],
     playerPhoto:'',playerPhotoX:50,playerPhotoY:20,playerPhotoZoom:100,
     clubLogo:'',
@@ -734,12 +734,12 @@ function Step1({report,onChange,lang}){
   const L={
     es:{photo:'Foto del Jugador',logo:'Logo del Club',name:'Nombre Completo',
       dob:'Fecha de Nacimiento',nat:'Nacionalidad',pos:'Posición',pos2:'Posición Secundaria',foot:'Pie Dominante',
-      club:'Club Actual',h:'Altura (cm)',w:'Peso (kg)',date:'Fecha de Evaluación',
+      club:'Club Actual',clubLogo:'Logo del Club',h:'Altura',w:'Peso',date:'Fecha de Evaluación',
       status:'Estado del Scouting',score:'Score General',sel:'Seleccionar posición',sel2:'Ninguna (opcional)',
       available:'Disponible (temporada/año)',budget:'Presupuesto'},
     en:{photo:'Player Photo',logo:'Club Logo',name:'Full Name',
       dob:'Date of Birth',nat:'Nationality',pos:'Position',pos2:'Secondary Position',foot:'Dominant Foot',
-      club:'Current Club',h:'Height (cm)',w:'Weight (kg)',date:'Evaluation Date',
+      club:'Current Club',clubLogo:'Club Logo',h:'Height',w:'Weight',date:'Evaluation Date',
       status:'Scouting Status',score:'Overall Score',sel:'Select position',sel2:'None (optional)',
       available:'Available (season/year)',budget:'Budget'},
   }[lang];
@@ -852,8 +852,44 @@ function Step1({report,onChange,lang}){
           <div><Lbl text={L.name}/><input className="input-field" value={report.playerName} onChange={u('playerName')} placeholder="Carlos García"/></div>
           <div><Lbl text={L.available}/><input className="input-field" value={report.available||''} onChange={u('available')} placeholder={lang==='es'?'Ej: Spring 2026':'E.g. Spring 2026'}/></div>
           <div><Lbl text={L.budget}/><input className="input-field" value={report.budget||''} onChange={u('budget')} placeholder={lang==='es'?'Ej: $500k - $1M':'E.g. $500k - $1M'}/></div>
-          <div><Lbl text={L.h}/><input type="number" className="input-field" value={report.height} onChange={u('height')} placeholder="176"/></div>
-          <div><Lbl text={L.w}/><input type="number" className="input-field" value={report.weight} onChange={u('weight')} placeholder="72"/></div>
+          <div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+              <Lbl text={L.h}/>
+              <div style={{display:'flex',gap:2}}>
+                {['cm','ft'].map(u2=>(
+                  <button key={u2} onClick={()=>onChange({heightUnit:u2})}
+                    style={{padding:'2px 8px',fontSize:9,fontWeight:700,border:'none',cursor:'pointer',
+                      borderRadius:4,fontFamily:'var(--font)',
+                      background:(report.heightUnit||'cm')===u2?'rgba(245,166,35,.2)':'var(--surface3)',
+                      color:(report.heightUnit||'cm')===u2?'#F5A623':'var(--muted)',
+                      outline:(report.heightUnit||'cm')===u2?'1px solid #F5A62366':'1px solid transparent'}}>
+                    {u2}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input type="number" className="input-field" value={report.height} onChange={u('height')}
+              placeholder={(report.heightUnit||'cm')==='cm'?'176':'5.10'}/>
+          </div>
+          <div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+              <Lbl text={L.w}/>
+              <div style={{display:'flex',gap:2}}>
+                {['kg','lbs'].map(u2=>(
+                  <button key={u2} onClick={()=>onChange({weightUnit:u2})}
+                    style={{padding:'2px 8px',fontSize:9,fontWeight:700,border:'none',cursor:'pointer',
+                      borderRadius:4,fontFamily:'var(--font)',
+                      background:(report.weightUnit||'kg')===u2?'rgba(245,166,35,.2)':'var(--surface3)',
+                      color:(report.weightUnit||'kg')===u2?'#F5A623':'var(--muted)',
+                      outline:(report.weightUnit||'kg')===u2?'1px solid #F5A62366':'1px solid transparent'}}>
+                    {u2}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input type="number" className="input-field" value={report.weight} onChange={u('weight')}
+              placeholder={(report.weightUnit||'kg')==='kg'?'72':'159'}/>
+          </div>
           <div><Lbl text={L.dob}/><input type="date" className="input-field" value={report.dateOfBirth} onChange={u('dateOfBirth')}/></div>
           <div>
             <Lbl text={L.nat}/>
@@ -897,7 +933,32 @@ function Step1({report,onChange,lang}){
               })}
             </div>
           </div>
-          <div><Lbl text={L.club}/><input className="input-field" value={report.currentClub} onChange={u('currentClub')} placeholder="Club XYZ"/></div>
+          <div style={{gridColumn:'1/-1'}}>
+            <Lbl text={L.club}/>
+            <div style={{display:'flex',gap:10,alignItems:'center'}}>
+              <input className="input-field" style={{flex:1}} value={report.currentClub} onChange={u('currentClub')} placeholder="Club XYZ"/>
+              <label style={{cursor:'pointer',flexShrink:0}}>
+                <div style={{width:44,height:44,borderRadius:8,overflow:'hidden',
+                  background:'#000',border:'1.5px dashed var(--border)',
+                  display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+                  position:'relative'}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(245,166,35,.5)'}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}>
+                  {report.clubLogo
+                    ? <img src={report.clubLogo} style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+                    : <span style={{fontSize:18,color:'var(--dim)'}}>🏟</span>
+                  }
+                </div>
+                <input type="file" accept="image/*" style={{display:'none'}}
+                  onChange={e=>{const f=e.target.files[0];if(!f)return;
+                    const r2=new FileReader();r2.onload=ev=>onChange({clubLogo:ev.target.result});r2.readAsDataURL(f);}}/>
+              </label>
+              {report.clubLogo&&(
+                <button onClick={()=>onChange({clubLogo:''})}
+                  style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:16,padding:2}}>×</button>
+              )}
+            </div>
+          </div>
           <div><Lbl text={L.date}/><input type="date" className="input-field" value={report.evaluationDate} onChange={u('evaluationDate')}/></div>
         </div>
       </div>
@@ -1806,8 +1867,8 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                 <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
                   {[
                     age&&{label:lang==='es'?'EDAD':'AGE',value:`${age} (${report.dateOfBirth?.slice(0,4)||''})`},
-                    report.height&&{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} cm`},
-                    report.weight&&{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} kg`},
+                    report.height&&{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} ${report.heightUnit||'cm'}`},
+                    report.weight&&{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} ${report.weightUnit||'kg'}`},
                     report.dominantFoot&&{label:lang==='es'?'PIE':'FOOT',value:translateFoot(lang,report.dominantFoot)},
                     report.nationality&&{label:lang==='es'?'NACIÓN':'NATION',value:report.nationality,flag:getFlagCode(report.nationality)},
                   ].filter(Boolean).map(s=>(
