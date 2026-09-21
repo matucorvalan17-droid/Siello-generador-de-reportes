@@ -1008,8 +1008,8 @@ function Step2Custom({report,onChange,lang}){
   const baseGroups=getAttrGroups(report.position);
   const cfg=report.customAttrConfig||{
     groups:baseGroups.map(g=>({
-      id:g.id,label:g.label[lang]||g.label.es,color:g.color,
-      attrs:g.attrs.map(a=>({key:a.key,label:typeof a.label==='object'?(a.label[lang]||a.label.es):a.label,enabled:true}))
+      id:g.id,label:typeof g.label==='object'?g.label:{es:g.label,en:g.label},color:g.color,
+      attrs:g.attrs.map(a=>({key:a.key,label:typeof a.label==='object'?a.label:{es:a.label,en:a.label},enabled:true}))
     })),
     extraGroups:[]
   };
@@ -1094,7 +1094,7 @@ function Step2Custom({report,onChange,lang}){
                   ? <input className="input-field" value={a.label} placeholder={L.newAttrPh}
                       style={{flex:1,fontSize:11,padding:'4px 8px'}}
                       onChange={e=>updateAttrLabel(gIdx,aIdx,e.target.value)}/>
-                  : <span style={{flex:1,fontSize:11,color:a.enabled?'var(--text)':'var(--dim)'}}>{a.label}</span>
+                  : <span style={{flex:1,fontSize:11,color:a.enabled?'var(--text)':'var(--dim)'}}>{typeof a.label==='object'?(a.label[lang]||a.label.es):a.label}</span>
                 }
                 <button onClick={()=>removeAttr(gIdx,aIdx)}
                   style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:14,padding:'0 4px'}}
@@ -1278,7 +1278,7 @@ function Step2({report,onChange,lang}){
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
             <div style={{width:3,height:16,borderRadius:2,background:'var(--gold)'}}/>
             <span style={{fontSize:12,fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase'}}>
-              {g.label[lang]}
+              {typeof g.label==='object'?(g.label[lang]||g.label.es):g.label}
             </span>
           </div>
           <div className="card" style={{padding:15,display:'flex',flexDirection:'column',gap:13}}>
