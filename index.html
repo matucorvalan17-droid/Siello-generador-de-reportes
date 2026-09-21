@@ -1980,18 +1980,36 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                     if(v>=2.5)return{label:lang==='es'?'PROMEDIO':'AVERAGE',c:P.muted};
                     return{label:lang==='es'?'EN DESARROLLO':'DEVELOPING',c:P.faint};
                   };
+                  // Build a key→{es,en} lookup from base groups for legacy string labels
+                  const allBaseAttrs={};
+                  const allBaseGroups={};
+                  [...ATTR_GROUPS,...GK_ATTR_GROUPS].forEach(g=>{
+                    allBaseGroups[g.id]=g.label;
+                    g.attrs.forEach(a=>{allBaseAttrs[a.key]=a.label;});
+                  });
+                  const resolveLabel=(label,key)=>{
+                    if(typeof label==='object'&&label!==null&&(label.es||label.en)) return label;
+                    // look up original bilingual label by key
+                    if(key&&allBaseAttrs[key]) return allBaseAttrs[key];
+                    return{es:label||'',en:label||''};
+                  };
+                  const resolveGroupLabel=(label,id)=>{
+                    if(typeof label==='object'&&label!==null&&(label.es||label.en)) return label;
+                    if(id&&allBaseGroups[id]) return allBaseGroups[id];
+                    return{es:label||'',en:label||''};
+                  };
                   let groups;
                   if(cfg){
                     groups=cfg.groups
                       .filter(g=>g.attrs.some(a=>a.enabled!==false))
-                      .map(g=>({g:{id:g.id,label:{es:g.label,en:g.label},
+                      .map(g=>({g:{id:g.id,label:resolveGroupLabel(g.label,g.id),
                         attrs:g.attrs.filter(a=>a.enabled!==false)
-                          .map(a=>({key:a.key,label:typeof a.label==='object'?a.label:{es:a.label,en:a.label}}))},
+                          .map(a=>({key:a.key,label:resolveLabel(a.label,a.key)}))},
                         color:g.color||'#FB923C'}));
                     if(cfg.extraGroups){
                       cfg.extraGroups.filter(g=>g.attrs.length>0).forEach(g=>{
-                        groups.push({g:{id:g.id,label:{es:g.label,en:g.label},
-                          attrs:g.attrs.map(a=>({key:a.key,label:{es:a.label,en:a.label}}))},
+                        groups.push({g:{id:g.id,label:resolveGroupLabel(g.label,g.id),
+                          attrs:g.attrs.map(a=>({key:a.key,label:resolveLabel(a.label,a.key)}))},
                           color:g.color||'#F5A623'});
                       });
                     }
