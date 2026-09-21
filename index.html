@@ -373,7 +373,8 @@ function newReport(brand='siello'){
     playerName:'',dateOfBirth:'',nationality:'',position:'',
     dominantFoot:'Diestro',height:'',weight:'',currentClub:'',
     evaluationDate:new Date().toISOString().split('T')[0],
-    playerPhoto:'',clubLogo:'',
+    playerPhoto:'',playerPhotoX:50,playerPhotoY:20,playerPhotoZoom:100,
+    clubLogo:'',
     overallScore:0,scoutingStatus:'PENDING',
     attributes:defaultAttrs(),
     executiveSummary:'',conclusionNotas:'',
@@ -772,6 +773,40 @@ function Step1({report,onChange,lang}){
       <div>
         <div style={{fontSize:10,fontWeight:700,letterSpacing:'.15em',color:'var(--muted)',marginBottom:12}}>IMÁGENES</div>
         <PhotoUpload value={report.playerPhoto} onChange={v=>onChange({playerPhoto:v})} label={L.photo}/>
+        {report.playerPhoto&&(
+          <div style={{marginTop:12,padding:'12px 14px',borderRadius:8,background:'var(--surface2)',
+            display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{fontSize:9,fontWeight:700,letterSpacing:'.15em',color:'var(--muted)'}}>
+              {lang==='es'?'AJUSTE DE FOTO':'PHOTO ADJUSTMENT'}
+            </div>
+            {/* Preview thumbnail */}
+            <div style={{width:'100%',height:80,borderRadius:6,overflow:'hidden',position:'relative',background:'#000'}}>
+              <img src={report.playerPhoto} style={{
+                position:'absolute',
+                width:`${report.playerPhotoZoom||100}%`,
+                height:'auto',
+                left:`${report.playerPhotoX??50}%`,
+                top:`${report.playerPhotoY??20}%`,
+                transform:'translate(-50%,-50%)',
+                objectFit:'unset'
+              }}/>
+            </div>
+            {[
+              {key:'playerPhotoX',label:lang==='es'?'Posición X':'X Position',min:0,max:100,def:50},
+              {key:'playerPhotoY',label:lang==='es'?'Posición Y':'Y Position',min:0,max:100,def:20},
+              {key:'playerPhotoZoom',label:lang==='es'?'Tamaño':'Size',min:50,max:300,def:100},
+            ].map(({key,label,min,max,def})=>(
+              <div key={key}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                  <span style={{fontSize:10,color:'var(--muted)',fontWeight:600}}>{label}</span>
+                  <span style={{fontSize:10,color:'var(--gold)',fontWeight:700}}>{report[key]??def}</span>
+                </div>
+                <input type="range" min={min} max={max} value={report[key]??def}
+                  onChange={e=>onChange({[key]:parseFloat(e.target.value)})}/>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Player data */}
@@ -1685,8 +1720,8 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                   color:'#FFFFFF',lineHeight:1.05,letterSpacing:'-.02em',margin:0}}>
                   {report.playerName||i(lang,'playerNamePh')}
                 </h1>
-                {/* Evaluation date */}
-                {report.evaluationDate&&(
+                {/* Evaluation date — only for standard reports */}
+                {!isCustom&&report.evaluationDate&&(
                   <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',
                     fontFamily:'Helvetica,Arial,sans-serif',letterSpacing:'.04em'}}>
                     {i(lang,'pdfEvalLabel')} — {fmtDateNum(report.evaluationDate)}
@@ -1698,8 +1733,15 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                 {report.playerPhoto
                   ? <>
                       <img src={report.playerPhoto}
-                        style={{position:'absolute',inset:0,width:'100%',height:'100%',
-                          objectFit:'cover',objectPosition:'top center'}}/>
+                        style={{
+                          position:'absolute',
+                          width:`${report.playerPhotoZoom||100}%`,
+                          height:'auto',
+                          left:`${report.playerPhotoX??50}%`,
+                          top:`${report.playerPhotoY??20}%`,
+                          transform:'translate(-50%,-50%)',
+                          objectFit:'unset'
+                        }}/>
                       {/* Left blend + bottom fade */}
                       <div style={{position:'absolute',inset:0,pointerEvents:'none',
                         background:'linear-gradient(to right,rgba(10,10,14,0.92) 0%,rgba(10,10,14,0.4) 30%,rgba(10,10,14,0) 60%)'}}/>
@@ -1725,66 +1767,48 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
           {/* ═══ BODY (dark) ═══ */}
           <div style={{padding:'26px 28px 36px',background:P.bg}}>
 
-            {/* Player Information */}
+            {/* Player Information — modern horizontal strip */}
             <div style={{marginBottom:24}}>
-              <PdfDiv label={i(lang,'pdfPlayerInfo')}/>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+              {/* Main stat row */}
+              <div style={{display:'flex',alignItems:'stretch',gap:0,borderRadius:10,overflow:'hidden',
+                border:`1px solid ${P.border}`,background:P.surface}}>
                 {[
-                  {label:i(lang,'pdfDob'),
-                    value:fmtDateNum(report.dateOfBirth)||'—',
-                    c:P.gold},
-                  {label:i(lang,'pdfPos'),
-                    value:translatePos(lang,report.position),
-                    c:P.muted},
-                  {label:i(lang,'pdfNat'),
-                    value:report.nationality||'—',
-                    flagCode:getFlagCode(report.nationality),
-                    c:P.muted},
-                ].map(card=>(
-                  <div key={card.label} style={{padding:'11px 13px',borderRadius:7,
-                    background:P.surface,border:`1px solid ${P.border}`,
-                    borderTop:`2px solid ${card.c}`}}>
-                    <div style={{fontSize:7,fontWeight:700,letterSpacing:'.18em',
-                      color:card.c,marginBottom:5,textTransform:'uppercase',
-                      fontFamily:'Helvetica,Arial,sans-serif'}}>{card.label}</div>
-                    <div style={{fontFamily:'Helvetica,Arial,sans-serif',fontWeight:900,
-                      fontSize:14,color:P.text,lineHeight:1.1,wordBreak:'break-word',
-                      display:'flex',alignItems:'center',gap:5}}>
-                      {card.flagCode&&<FlagImg nat={card.value} h={11}/>}
-                      {card.value}
-                    </div>
+                  {label:i(lang,'pdfDob'),value:fmtDateNum(report.dateOfBirth)||'—',c:accent,wide:false},
+                  {label:i(lang,'pdfPos'),value:translatePos(lang,report.position)||'—',c:accent,wide:true},
+                  {label:i(lang,'pdfNat'),value:report.nationality||'—',flagCode:getFlagCode(report.nationality),c:P.muted,wide:false},
+                  {label:i(lang,'pdfFoot'),value:translateFoot(lang,report.dominantFoot),c:P.muted,wide:false},
+                  ...(report.height?[{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} cm`,c:P.muted,wide:false}]:[]),
+                  ...(report.weight?[{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} kg`,c:P.muted,wide:false}]:[]),
+                ].map((f,idx,arr)=>(
+                  <div key={f.label} style={{flex:f.wide?1.4:1,padding:'14px 16px',
+                    borderRight:idx<arr.length-1?`1px solid ${P.border}`:'none',
+                    display:'flex',flexDirection:'column',gap:5,minWidth:0}}>
+                    <span style={{fontSize:7,fontWeight:700,letterSpacing:'.2em',textTransform:'uppercase',
+                      color:f.c,fontFamily:'Helvetica,Arial,sans-serif',whiteSpace:'nowrap'}}>{f.label}</span>
+                    <span style={{fontSize:13,fontWeight:900,color:P.text,
+                      fontFamily:'Helvetica,Arial,sans-serif',lineHeight:1.1,
+                      display:'flex',alignItems:'center',gap:5,overflow:'hidden',
+                      textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      {f.flagCode&&<FlagImg nat={f.value} h={11}/>}{f.value}
+                    </span>
                   </div>
                 ))}
-                {/* Dominant Foot - visual boot card */}
-                <div style={{padding:'11px 13px',borderRadius:7,
-                  background:P.surface,border:`1px solid ${P.border}`,
-                  borderTop:`2px solid ${P.muted}`}}>
-                  <div style={{fontSize:7,fontWeight:700,letterSpacing:'.18em',
-                    color:P.muted,marginBottom:5,textTransform:'uppercase',
-                    fontFamily:'Helvetica,Arial,sans-serif'}}>{i(lang,'pdfFoot')}</div>
-                  <div style={{fontFamily:'Helvetica,Arial,sans-serif',fontWeight:900,
-                    fontSize:14,color:P.text,lineHeight:1.1}}>
-                    {translateFoot(lang,report.dominantFoot)}
-                  </div>
-                </div>
               </div>
-              {/* Available / Budget / Height / Weight — extra row */}
-              {(report.available||report.budget||report.height||report.weight)&&(
-                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginTop:8}}>
+              {/* Available / Budget strip */}
+              {(report.available||report.budget)&&(
+                <div style={{display:'flex',gap:0,marginTop:6,borderRadius:10,overflow:'hidden',
+                  border:`1px solid ${P.border}`,background:P.surface}}>
                   {[
                     report.available&&{label:lang==='es'?'DISPONIBLE':'AVAILABLE',value:report.available,c:'#34D399'},
                     report.budget&&{label:lang==='es'?'PRESUPUESTO':'BUDGET',value:report.budget,c:'#60A5FA'},
-                    report.height&&{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} cm`,c:P.muted},
-                    report.weight&&{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} kg`,c:P.muted},
-                  ].filter(Boolean).map(card=>(
-                    <div key={card.label} style={{padding:'11px 13px',borderRadius:7,
-                      background:P.surface,border:`1px solid ${P.border}`,
-                      borderTop:`2px solid ${card.c}`}}>
-                      <div style={{fontSize:7,fontWeight:700,letterSpacing:'.18em',
-                        color:card.c,marginBottom:5,textTransform:'uppercase',
-                        fontFamily:'Helvetica,Arial,sans-serif'}}>{card.label}</div>
-                      <div style={{fontFamily:'Helvetica,Arial,sans-serif',fontWeight:900,
-                        fontSize:14,color:P.text,lineHeight:1.1}}>{card.value}</div>
+                  ].filter(Boolean).map((f,idx,arr)=>(
+                    <div key={f.label} style={{flex:1,padding:'12px 16px',
+                      borderRight:idx<arr.length-1?`1px solid ${P.border}`:'none',
+                      display:'flex',flexDirection:'column',gap:5}}>
+                      <span style={{fontSize:7,fontWeight:700,letterSpacing:'.2em',textTransform:'uppercase',
+                        color:f.c,fontFamily:'Helvetica,Arial,sans-serif'}}>{f.label}</span>
+                      <span style={{fontSize:13,fontWeight:900,color:P.text,
+                        fontFamily:'Helvetica,Arial,sans-serif',lineHeight:1.1}}>{f.value}</span>
                     </div>
                   ))}
                 </div>
@@ -1919,8 +1943,10 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                         padding:'9px 14px',background:idx%2===0?P.bg:P.surface,
                         borderBottom:idx<report.trayectoria.clubs.length-1?`1px solid ${P.border}`:'none'}}>
                         {c.img&&(
-                          <img src={c.img} style={{width:24,height:24,objectFit:'contain',
-                            borderRadius:4,flexShrink:0,background:'#fff',padding:2}}/>
+                          <div style={{width:28,height:28,borderRadius:5,flexShrink:0,
+                            background:'#000',display:'flex',alignItems:'center',justifyContent:'center',padding:2}}>
+                            <img src={c.img} style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+                          </div>
                         )}
                         <div style={{flex:2,fontSize:11,color:P.text,fontWeight:700,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.name||'—'}</div>
                         <div style={{flex:1,fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.from||'—'}</div>
