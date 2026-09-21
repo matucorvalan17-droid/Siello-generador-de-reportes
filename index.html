@@ -381,6 +381,7 @@ function newReport(brand='siello'){
     suggestedTeams:[],
     customAttrConfig:null,
     available:'',budget:'',
+    hidePerformanceLabel:false,
     trayectoria:{enabled:false,clubs:[],logros:[]}};
 }
 
@@ -960,6 +961,25 @@ function Step1({report,onChange,lang}){
             </div>
           </div>
           <div><Lbl text={L.date}/><input type="date" className="input-field" value={report.evaluationDate} onChange={u('evaluationDate')}/></div>
+          <div style={{gridColumn:'1/-1'}}>
+            <label style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',
+              padding:'10px 14px',borderRadius:8,background:'var(--surface2)',
+              border:'1px solid var(--border)'}}>
+              <div onClick={()=>onChange({hidePerformanceLabel:!report.hidePerformanceLabel})}
+                style={{width:36,height:20,borderRadius:10,flexShrink:0,
+                  background:report.hidePerformanceLabel?'var(--surface3)':'rgba(245,166,35,.25)',
+                  border:report.hidePerformanceLabel?'1.5px solid var(--border)':'1.5px solid #F5A62388',
+                  position:'relative',transition:'all .2s',cursor:'pointer'}}>
+                <div style={{position:'absolute',top:2,
+                  left:report.hidePerformanceLabel?2:16,width:14,height:14,
+                  borderRadius:'50%',background:report.hidePerformanceLabel?'var(--muted)':'#F5A623',
+                  transition:'left .2s',boxShadow:'0 1px 3px rgba(0,0,0,.4)'}}/>
+              </div>
+              <span style={{fontSize:12,color:'var(--muted)',fontWeight:600,fontFamily:'var(--font)'}}>
+                {lang==='es'?'Mostrar etiqueta "Performance Report"':'Show "Performance Report" label'}
+              </span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -1822,13 +1842,15 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                     <img src={secondaryLogo} style={{height:28*logo2Scale,objectFit:'contain',filter:secondaryLogoFilter}}/>
                   </>}
                 </div>
-                <div style={{display:'flex',alignItems:'center',gap:6}}>
-                  <div style={{width:12,height:1,background:accent}}/>
-                  <span style={{fontSize:7,fontWeight:700,letterSpacing:'.3em',color:accent,
-                    textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif'}}>
-                    {i(lang,'pdfTitle')}
-                  </span>
-                </div>
+                {!report.hidePerformanceLabel&&(
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <div style={{width:12,height:1,background:accent}}/>
+                    <span style={{fontSize:7,fontWeight:700,letterSpacing:'.3em',color:accent,
+                      textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif'}}>
+                      {i(lang,'pdfTitle')}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Player name — huge */}
@@ -1867,8 +1889,8 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                 <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
                   {[
                     age&&{label:lang==='es'?'EDAD':'AGE',value:`${age} (${report.dateOfBirth?.slice(0,4)||''})`},
-                    report.height&&{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} ${report.heightUnit||'cm'}`},
-                    report.weight&&{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} ${report.weightUnit||'kg'}`},
+                    (report.height!==''&&report.height!=null)&&{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} ${report.heightUnit||'cm'}`},
+                    (report.weight!==''&&report.weight!=null)&&{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} ${report.weightUnit||'kg'}`},
                     report.dominantFoot&&{label:lang==='es'?'PIE':'FOOT',value:translateFoot(lang,report.dominantFoot)},
                     report.nationality&&{label:lang==='es'?'NACIÓN':'NATION',value:report.nationality,flag:getFlagCode(report.nationality)},
                   ].filter(Boolean).map(s=>(
@@ -1894,7 +1916,7 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
               <div style={{display:'flex',gap:0,marginBottom:28,borderRadius:8,
                 overflow:'hidden',border:`1px solid ${P.border}`,background:P.surface}}>
                 {[
-                  report.currentClub&&{label:lang==='es'?'CLUB ACTUAL':'CURRENT CLUB',value:report.currentClub,c:accent},
+                  report.currentClub&&{label:lang==='es'?'CLUB ACTUAL':'CURRENT CLUB',value:report.currentClub,c:accent,logo:report.clubLogo||null},
                   report.available&&{label:lang==='es'?'DISPONIBLE':'AVAILABLE',value:report.available,c:'#34D399'},
                   report.budget&&{label:lang==='es'?'PRESUPUESTO':'BUDGET',value:report.budget,c:'#60A5FA'},
                   !isCustom&&report.evaluationDate&&{label:lang==='es'?'FECHA':'DATE',value:fmtDateNum(report.evaluationDate),c:P.faint},
@@ -1904,8 +1926,16 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                     borderTop:`2px solid ${f.c}`}}>
                     <div style={{fontSize:6.5,fontWeight:700,letterSpacing:'.22em',color:f.c,
                       marginBottom:6,textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif'}}>{f.label}</div>
-                    <div style={{fontSize:14,fontWeight:900,color:P.text,
-                      fontFamily:'Helvetica,Arial,sans-serif',lineHeight:1.1}}>{f.value}</div>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      {f.logo&&(
+                        <div style={{width:28,height:28,borderRadius:4,background:'#000',
+                          display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                          <img src={f.logo} style={{width:24,height:24,objectFit:'contain'}}/>
+                        </div>
+                      )}
+                      <div style={{fontSize:14,fontWeight:900,color:P.text,
+                        fontFamily:'Helvetica,Arial,sans-serif',lineHeight:1.1}}>{f.value}</div>
+                    </div>
                   </div>
                 ))}
               </div>
