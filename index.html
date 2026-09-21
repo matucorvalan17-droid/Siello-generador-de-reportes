@@ -511,7 +511,7 @@ function Sidebar({activeSection,onNav,onNavCovers,lang,setLang}){
 // ─── DASHBOARD ────────────────────────────────────────────────────
 function Dashboard({reports,lang,brand='siello',headerLogo,onNew,onOpen,onDelete}){
   const [search,setSearch]=React.useState('');
-  const byBrand=reports.filter(r=>(r.brand||'custom')===(brand||'custom'));
+  const byBrand=reports.filter(r=>(r.brand||'siello')===(brand||'siello'));
   const filtered=byBrand.filter(r=>{
     if(!search) return true;
     const q=search.toLowerCase();
@@ -687,12 +687,35 @@ function Dashboard({reports,lang,brand='siello',headerLogo,onNew,onOpen,onDelete
 }
 
 // ─── REPORTS HUB (tabbed Siello/Custom dashboards) ─────────────────
-function ReportsHub({reports,lang,branding,onNew,onOpen,onDelete}){
+function ReportsHub({reports,lang,branding,tab,onTabChange,onNew,onOpen,onDelete}){
+  const TABS=[
+    {k:'siello',label:lang==='es'?'Siello Academy':'Siello Academy'},
+    {k:'custom',label:lang==='es'?'Personalizados':'Custom'},
+  ];
   return(
     <div style={{flex:1,overflowY:'auto'}}>
-      <Dashboard reports={reports} lang={lang} brand="custom"
-        headerLogo={branding.logo1Url}
-        onNew={()=>onNew('custom')} onOpen={onOpen} onDelete={onDelete}/>
+      <div style={{position:'sticky',top:0,zIndex:5,background:'var(--bg)',
+        padding:'20px 32px 0',borderBottom:'1px solid var(--border)'}}>
+        <div style={{display:'flex',gap:4}}>
+          {TABS.map(t=>{
+            const active=tab===t.k;
+            return(
+              <button key={t.k} onClick={()=>onTabChange(t.k)}
+                style={{padding:'10px 18px',fontSize:12.5,fontWeight:700,
+                  fontFamily:'var(--font)',border:'none',cursor:'pointer',
+                  background:'transparent',borderRadius:'8px 8px 0 0',
+                  color:active?'var(--gold)':'var(--muted)',
+                  borderBottom:active?'2px solid var(--gold)':'2px solid transparent',
+                  transition:'all .15s'}}>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <Dashboard reports={reports} lang={lang} brand={tab}
+        headerLogo={tab==='custom'?branding.logo1Url:null}
+        onNew={()=>onNew(tab)} onOpen={onOpen} onDelete={onDelete}/>
     </div>
   );
 }
@@ -2895,7 +2918,7 @@ function CoversHub({covers,onNew,onOpen,onDelete,lang}){
 function App(){
   const [lang,setLang]=useState('es');
   const [view,setView]=useState('dashboard');
-  const [dashboardTab,setDashboardTab]=useState('custom');
+  const [dashboardTab,setDashboardTab]=useState('siello');
   const [reports,setReports]=useState(()=>loadReports());
   const [currentId,setCurrentId]=useState(null);
   const [branding,setBranding]=useState(()=>loadBranding());
@@ -2971,14 +2994,14 @@ function App(){
   }
   function handleOpen(id){
     const r=reports.find(x=>x.id===id);
-    setDashboardTab('custom');
+    setDashboardTab(r?.brand||'siello');
     setCurrentId(id);setView('form');
   }
   function handleDelete(id){
     const r=reports.find(x=>x.id===id);
     const next=reports.filter(r=>r.id!==id);
     setReports(next); saveReports(next);
-    if(currentId===id){setCurrentId(null);setDashboardTab('custom');setView('dashboard')}
+    if(currentId===id){setCurrentId(null);setDashboardTab(r?.brand||'siello');setView('dashboard')}
   }
   function handleNav(){setView('dashboard')}
 
@@ -2991,6 +3014,7 @@ function App(){
 
         {view==='dashboard'&&(
           <ReportsHub reports={reports} lang={lang} branding={branding}
+            tab={dashboardTab} onTabChange={setDashboardTab}
             onNew={handleNew} onOpen={handleOpen} onDelete={handleDelete}/>
         )}
 
