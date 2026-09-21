@@ -1394,7 +1394,7 @@ function Step4({report,onChange,lang}){
 }
 
 // ─── REPORT FORM ──────────────────────────────────────────────────
-function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingChange}){
+function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingChange,saveStatus}){
   const isCustom=report.brand==='custom';
   const [step,setStep]=useState(0);
   const [saved,setSaved]=useState(false);
@@ -1434,6 +1434,18 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingCh
                 background:i<step?'var(--gold)':'var(--border)'}}/>}
             </React.Fragment>
           ))}
+        </div>
+        {/* Save status indicator */}
+        <div style={{display:'flex',alignItems:'center',gap:5,marginTop:8}}>
+          <div style={{width:6,height:6,borderRadius:'50%',flexShrink:0,
+            background:saveStatus==='unsaved'?'#F59E0B':saveStatus==='saving'?'#60A5FA':'#34D399',
+            boxShadow:saveStatus==='unsaved'?'0 0 6px #F59E0B88':saveStatus==='saving'?'0 0 6px #60A5FA88':'0 0 6px #34D39966'}}/>
+          <span style={{fontSize:9,fontWeight:600,letterSpacing:'.1em',
+            color:saveStatus==='unsaved'?'#F59E0B':saveStatus==='saving'?'#60A5FA':'var(--dim)'}}>
+            {saveStatus==='unsaved'
+              ?(lang==='es'?'GUARDANDO...':'SAVING...')
+              :(lang==='es'?'GUARDADO':'SAVED')}
+          </span>
         </div>
       </div>
       {/* Content */}
@@ -2872,6 +2884,35 @@ function App(){
   const [previewZoom,setPreviewZoom]=useState(.46);
   const [covers,setCovers]=useState(()=>loadCovers());
   const [coverId,setCoverId]=useState(null);
+  const [saveStatus,setSaveStatus]=useState('saved'); // 'saved' | 'saving' | 'unsaved'
+  const reportsRef=React.useRef(reports);
+  const coversRef=React.useRef(covers);
+  const saveTimerRef=React.useRef(null);
+
+  // Keep refs in sync for emergency saves
+  React.useEffect(()=>{reportsRef.current=reports;},[reports]);
+  React.useEffect(()=>{coversRef.current=covers;},[covers]);
+
+  // beforeunload — force-save current state synchronously
+  React.useEffect(()=>{
+    const handler=()=>{
+      saveReports(reportsRef.current);
+      saveCovers(coversRef.current);
+    };
+    window.addEventListener('beforeunload',handler);
+    return()=>window.removeEventListener('beforeunload',handler);
+  },[]);
+
+  // Debounced autosave — fires 3s after last change
+  function scheduleAutoSave(){
+    setSaveStatus('unsaved');
+    if(saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current=setTimeout(()=>{
+      saveReports(reportsRef.current);
+      saveCovers(coversRef.current);
+      setSaveStatus('saved');
+    },3000);
+  }
 
   const current=reports.find(r=>r.id===currentId)||null;
   const currentCover=covers.find(c=>c.id===coverId)||null;
@@ -2891,6 +2932,7 @@ function App(){
   function handleCoverUpdate(updates){
     const next=covers.map(c=>c.id===coverId?{...c,...updates}:c);
     setCovers(next); saveCovers(next);
+    scheduleAutoSave();
   }
 
   function handleBrandingChange(next){
@@ -2902,6 +2944,7 @@ function App(){
     const next=reports.map(r=>r.id===updated.id?updated:r);
     setReports(next);
     saveReports(next);
+    scheduleAutoSave();
   }
   function handleNew(brand){
     const r=newReport(brand); const next=[r,...reports];
@@ -3013,7 +3056,8 @@ function App(){
                       <ReportForm report={current} onUpdate={upsert}
                         onPreview={()=>setView('preview')}
                         onBack={()=>setView('dashboard')}
-                        lang={lang} branding={branding} onBrandingChange={handleBrandingChange}/>
+                        lang={lang} branding={branding} onBrandingChange={handleBrandingChange}
+                        saveStatus={saveStatus}/>
                     </div>
                     <div style={{flex:'1 1 44%',minWidth:0,height:'100%',display:'flex',
                       flexDirection:'column',borderLeft:'1px solid var(--border)'}}>
