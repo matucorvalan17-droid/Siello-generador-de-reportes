@@ -1441,15 +1441,12 @@ function FootVisual({dominantFoot,lang,compact=false}){
 }
 
 // ─── PDF DIVIDER ──────────────────────────────────────────────────
-function PdfDiv({label}){
+function PdfDiv({label,accent='#F5A623'}){
   return(
-    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:15}}>
-      <div style={{width:3,height:14,borderRadius:2,flexShrink:0,
-        background:'linear-gradient(180deg,#F5A623 0%,#D4880A 100%)'}}/>
-      <span style={{fontSize:7.5,fontWeight:900,letterSpacing:'.28em',textTransform:'uppercase',
-        color:'#F5A623',whiteSpace:'nowrap',fontFamily:'Helvetica,Arial,sans-serif'}}>{label}</span>
-      <div style={{flex:1,height:1,
-        background:'linear-gradient(90deg,rgba(245,166,35,.3) 0%,rgba(42,42,50,0) 100%)'}}/>
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}>
+      <div style={{width:18,height:2,borderRadius:1,flexShrink:0,background:accent}}/>
+      <span style={{fontSize:7,fontWeight:700,letterSpacing:'.25em',textTransform:'uppercase',
+        color:accent,whiteSpace:'nowrap',fontFamily:'Helvetica,Arial,sans-serif'}}>{label}</span>
     </div>
   );
 }
@@ -1687,206 +1684,197 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
         <div id={embedded?undefined:'pdf-layout'} style={{
           maxWidth:860,margin:'0 auto',background:P.bg,
           borderRadius:0,overflow:'hidden',position:'relative',
-          boxShadow:'0 4px 32px rgba(0,0,0,.2)',
+          boxShadow:'0 4px 32px rgba(0,0,0,.5)',
           fontFamily:'Helvetica,Arial,sans-serif'}}>
-          {/* Accent left border line running full height */}
-          <div style={{position:'absolute',left:0,top:0,bottom:0,width:4,zIndex:10,
-            background:`linear-gradient(180deg,${accent} 0%,${accent} 60%,${accent}4D 100%)`,
-            pointerEvents:'none'}}/>
 
-          {/* ═══ HERO (dark) ═══ */}
-          <div style={{position:'relative',overflow:'hidden',background:'#0A0A0E'}}>
-            {/* Accent stripe top */}
-            <div style={{position:'absolute',top:0,left:0,right:0,height:4,zIndex:2,
-              background:accent}}/>
-            <div style={{position:'relative',display:'flex',minHeight:280}}>
-              {/* Left */}
-              <div style={{flex:1,padding:'28px 30px 28px',display:'flex',flexDirection:'column',justifyContent:'center',gap:10}}>
-                {/* Logo row */}
-                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
-                  <img src={primaryLogo} style={{height:28*logo1Scale,objectFit:'contain'}}/>
+          {/* ═══ HERO — full-bleed photo background ═══ */}
+          <div style={{position:'relative',overflow:'hidden',minHeight:340,background:'#050508'}}>
+            {/* Photo full canvas */}
+            {report.playerPhoto&&(
+              <img src={report.playerPhoto} style={{
+                position:'absolute',
+                width:`${report.playerPhotoZoom||100}%`,height:'auto',
+                left:`${report.playerPhotoX??50}%`,top:`${report.playerPhotoY??20}%`,
+                transform:'translate(-50%,-50%)',objectFit:'unset',zIndex:0}}/>
+            )}
+            {/* Gradient overlays — black left panel + bottom fade */}
+            <div style={{position:'absolute',inset:0,zIndex:1,
+              background:'linear-gradient(90deg,rgba(5,5,8,0.97) 0%,rgba(5,5,8,0.88) 38%,rgba(5,5,8,0.4) 65%,rgba(5,5,8,0.05) 100%)'}}/>
+            <div style={{position:'absolute',inset:0,zIndex:1,
+              background:'linear-gradient(0deg,rgba(5,5,8,0.85) 0%,transparent 45%)'}}/>
+            {/* Accent top bar */}
+            <div style={{position:'absolute',top:0,left:0,right:0,height:3,zIndex:3,background:accent}}/>
+
+            {/* Content */}
+            <div style={{position:'relative',zIndex:2,padding:'28px 34px 32px',
+              display:'flex',flexDirection:'column',justifyContent:'flex-end',minHeight:340}}>
+              {/* Top row: logos + report label */}
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+                marginBottom:'auto',paddingBottom:20}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <img src={primaryLogo} style={{height:26*logo1Scale,objectFit:'contain'}}/>
                   {secondaryLogo&&<>
-                    <div style={{width:1,height:18,background:'rgba(255,255,255,0.15)',flexShrink:0}}/>
-                    <img src={secondaryLogo} style={{height:32*logo2Scale,objectFit:'contain',filter:secondaryLogoFilter}}/>
+                    <div style={{width:1,height:16,background:'rgba(255,255,255,0.12)',flexShrink:0}}/>
+                    <img src={secondaryLogo} style={{height:28*logo2Scale,objectFit:'contain',filter:secondaryLogoFilter}}/>
                   </>}
                 </div>
-                {/* PERFORMANCE REPORT label */}
-                <div style={{fontSize:8,fontWeight:900,letterSpacing:'.32em',textTransform:'uppercase',
-                  color:'#F5A623',fontFamily:'Helvetica,Arial,sans-serif'}}>
-                  {i(lang,'pdfTitle')}
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <div style={{width:12,height:1,background:accent}}/>
+                  <span style={{fontSize:7,fontWeight:700,letterSpacing:'.3em',color:accent,
+                    textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif'}}>
+                    {i(lang,'pdfTitle')}
+                  </span>
                 </div>
-                {/* Player name */}
-                <h1 style={{fontFamily:'Helvetica,Arial,sans-serif',fontSize:36,fontWeight:900,
-                  color:'#FFFFFF',lineHeight:1.05,letterSpacing:'-.02em',margin:0}}>
+              </div>
+
+              {/* Player name — huge */}
+              <div>
+                <h1 style={{fontFamily:'Helvetica,Arial,sans-serif',fontSize:46,fontWeight:900,
+                  color:'#FFFFFF',lineHeight:0.95,letterSpacing:'-.02em',margin:'0 0 12px 0',
+                  textTransform:'uppercase'}}>
                   {report.playerName||i(lang,'playerNamePh')}
                 </h1>
-                {/* Evaluation date — only for standard reports */}
-                {!isCustom&&report.evaluationDate&&(
-                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',
-                    fontFamily:'Helvetica,Arial,sans-serif',letterSpacing:'.04em'}}>
-                    {i(lang,'pdfEvalLabel')} — {fmtDateNum(report.evaluationDate)}
+                {/* Position badge */}
+                {report.position&&(
+                  <div style={{display:'inline-flex',alignItems:'center',gap:6,
+                    background:`${accent}22`,border:`1px solid ${accent}55`,
+                    borderRadius:4,padding:'4px 10px',marginBottom:18}}>
+                    <div style={{width:6,height:6,borderRadius:'50%',background:accent,flexShrink:0}}/>
+                    <span style={{fontSize:10,fontWeight:700,color:accent,letterSpacing:'.1em',
+                      textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif'}}>
+                      {translatePos(lang,report.position)}
+                    </span>
                   </div>
                 )}
-              </div>
-              {/* Photo — wider, with left-edge gradient blend */}
-              <div style={{width:260,flexShrink:0,position:'relative',background:'#0D0D18'}}>
-                {report.playerPhoto
-                  ? <>
-                      <img src={report.playerPhoto}
-                        style={{
-                          position:'absolute',
-                          width:`${report.playerPhotoZoom||100}%`,
-                          height:'auto',
-                          left:`${report.playerPhotoX??50}%`,
-                          top:`${report.playerPhotoY??20}%`,
-                          transform:'translate(-50%,-50%)',
-                          objectFit:'unset'
-                        }}/>
-                      {/* Left blend + bottom fade */}
-                      <div style={{position:'absolute',inset:0,pointerEvents:'none',
-                        background:'linear-gradient(to right,rgba(10,10,14,0.92) 0%,rgba(10,10,14,0.4) 30%,rgba(10,10,14,0) 60%)'}}/>
-                      <div style={{position:'absolute',inset:0,pointerEvents:'none',
-                        background:'linear-gradient(to bottom,rgba(10,10,14,0) 50%,rgba(10,10,14,0.7) 100%)'}}/>
-                    </>
-                  : <div style={{width:'100%',height:'100%',minHeight:280,
-                      display:'flex',alignItems:'center',justifyContent:'center',
-                      background:'linear-gradient(135deg,#0D0D18,#151530)'}}>
-                      <div style={{width:72,height:72,borderRadius:'50%',
-                        background:'rgba(245,166,35,.08)',border:'2px solid rgba(245,166,35,.2)',
-                        display:'flex',alignItems:'center',justifyContent:'center',
-                        fontFamily:'Helvetica,Arial,sans-serif',fontWeight:900,
-                        fontSize:28,color:'#F5A623'}}>
-                        {report.playerName?.charAt(0)?.toUpperCase()||'?'}
-                      </div>
+                {/* Inline stats */}
+                <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
+                  {[
+                    age&&{label:lang==='es'?'EDAD':'AGE',value:`${age} (${report.dateOfBirth?.slice(0,4)||''})`},
+                    report.height&&{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} cm`},
+                    report.weight&&{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} kg`},
+                    report.dominantFoot&&{label:lang==='es'?'PIE':'FOOT',value:translateFoot(lang,report.dominantFoot)},
+                    report.nationality&&{label:lang==='es'?'NACIÓN':'NATION',value:report.nationality,flag:getFlagCode(report.nationality)},
+                  ].filter(Boolean).map(s=>(
+                    <div key={s.label} style={{display:'flex',flexDirection:'column',gap:2}}>
+                      <span style={{fontSize:6.5,fontWeight:700,letterSpacing:'.22em',color:'rgba(255,255,255,0.4)',
+                        textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif'}}>{s.label}</span>
+                      <span style={{fontSize:12,fontWeight:900,color:'rgba(255,255,255,0.92)',
+                        fontFamily:'Helvetica,Arial,sans-serif',display:'flex',alignItems:'center',gap:4}}>
+                        {s.flag&&<FlagImg nat={s.value} h={10}/>}{s.value}
+                      </span>
                     </div>
-                }
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* ═══ BODY (dark) ═══ */}
-          <div style={{padding:'26px 28px 36px',background:P.bg}}>
+          {/* ═══ BODY ═══ */}
+          <div style={{padding:'28px 34px 40px',background:P.bg}}>
 
-            {/* Player Information — modern horizontal strip */}
-            <div style={{marginBottom:24}}>
-              {/* Main stat row */}
-              <div style={{display:'flex',alignItems:'stretch',gap:0,borderRadius:10,overflow:'hidden',
-                border:`1px solid ${P.border}`,background:P.surface}}>
+            {/* Club + available/budget row */}
+            {(report.currentClub||report.available||report.budget)&&(
+              <div style={{display:'flex',gap:0,marginBottom:28,borderRadius:8,
+                overflow:'hidden',border:`1px solid ${P.border}`,background:P.surface}}>
                 {[
-                  {label:i(lang,'pdfDob'),value:fmtDateNum(report.dateOfBirth)||'—',c:accent,wide:false},
-                  {label:i(lang,'pdfPos'),value:translatePos(lang,report.position)||'—',c:accent,wide:true},
-                  {label:i(lang,'pdfNat'),value:report.nationality||'—',flagCode:getFlagCode(report.nationality),c:P.muted,wide:false},
-                  {label:i(lang,'pdfFoot'),value:translateFoot(lang,report.dominantFoot),c:P.muted,wide:false},
-                  ...(report.height?[{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} cm`,c:P.muted,wide:false}]:[]),
-                  ...(report.weight?[{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} kg`,c:P.muted,wide:false}]:[]),
-                ].map((f,idx,arr)=>(
-                  <div key={f.label} style={{flex:f.wide?1.4:1,padding:'14px 16px',
+                  report.currentClub&&{label:lang==='es'?'CLUB ACTUAL':'CURRENT CLUB',value:report.currentClub,c:accent},
+                  report.available&&{label:lang==='es'?'DISPONIBLE':'AVAILABLE',value:report.available,c:'#34D399'},
+                  report.budget&&{label:lang==='es'?'PRESUPUESTO':'BUDGET',value:report.budget,c:'#60A5FA'},
+                  !isCustom&&report.evaluationDate&&{label:lang==='es'?'FECHA':'DATE',value:fmtDateNum(report.evaluationDate),c:P.faint},
+                ].filter(Boolean).map((f,idx,arr)=>(
+                  <div key={f.label} style={{flex:1,padding:'14px 18px',
                     borderRight:idx<arr.length-1?`1px solid ${P.border}`:'none',
-                    display:'flex',flexDirection:'column',gap:5,minWidth:0}}>
-                    <span style={{fontSize:7,fontWeight:700,letterSpacing:'.2em',textTransform:'uppercase',
-                      color:f.c,fontFamily:'Helvetica,Arial,sans-serif',whiteSpace:'nowrap'}}>{f.label}</span>
-                    <span style={{fontSize:13,fontWeight:900,color:P.text,
-                      fontFamily:'Helvetica,Arial,sans-serif',lineHeight:1.1,
-                      display:'flex',alignItems:'center',gap:5,overflow:'hidden',
-                      textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                      {f.flagCode&&<FlagImg nat={f.value} h={11}/>}{f.value}
-                    </span>
+                    borderTop:`2px solid ${f.c}`}}>
+                    <div style={{fontSize:6.5,fontWeight:700,letterSpacing:'.22em',color:f.c,
+                      marginBottom:6,textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif'}}>{f.label}</div>
+                    <div style={{fontSize:14,fontWeight:900,color:P.text,
+                      fontFamily:'Helvetica,Arial,sans-serif',lineHeight:1.1}}>{f.value}</div>
                   </div>
                 ))}
               </div>
-              {/* Available / Budget strip */}
-              {(report.available||report.budget)&&(
-                <div style={{display:'flex',gap:0,marginTop:6,borderRadius:10,overflow:'hidden',
-                  border:`1px solid ${P.border}`,background:P.surface}}>
-                  {[
-                    report.available&&{label:lang==='es'?'DISPONIBLE':'AVAILABLE',value:report.available,c:'#34D399'},
-                    report.budget&&{label:lang==='es'?'PRESUPUESTO':'BUDGET',value:report.budget,c:'#60A5FA'},
-                  ].filter(Boolean).map((f,idx,arr)=>(
-                    <div key={f.label} style={{flex:1,padding:'12px 16px',
-                      borderRight:idx<arr.length-1?`1px solid ${P.border}`:'none',
-                      display:'flex',flexDirection:'column',gap:5}}>
-                      <span style={{fontSize:7,fontWeight:700,letterSpacing:'.2em',textTransform:'uppercase',
-                        color:f.c,fontFamily:'Helvetica,Arial,sans-serif'}}>{f.label}</span>
-                      <span style={{fontSize:13,fontWeight:900,color:P.text,
-                        fontFamily:'Helvetica,Arial,sans-serif',lineHeight:1.1}}>{f.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Executive Summary */}
             {report.executiveSummary&&(
-              <div style={{marginBottom:24}}>
-                <PdfDiv label={i(lang,'pdfSummary')}/>
-                <div style={{padding:'14px 16px',borderRadius:8,background:P.surface,
-                  border:`1px solid ${P.border}`,borderLeft:`3px solid ${P.gold}`}}>
-                  <p style={{fontSize:12,color:P.text,lineHeight:1.8,margin:0,
+              <div style={{marginBottom:28}}>
+                <PdfDiv label={i(lang,'pdfSummary')} accent={accent}/>
+                <div style={{padding:'16px 20px',borderRadius:8,background:P.surface,
+                  borderLeft:`3px solid ${accent}`}}>
+                  <p style={{fontSize:12,color:P.text,lineHeight:1.9,margin:0,
                     fontFamily:'Helvetica,Arial,sans-serif'}}>{report.executiveSummary}</p>
                 </div>
               </div>
             )}
 
-            {/* Kore Matrix — per-attribute bars, 1-5 scale, grouped by area */}
-            <div style={{marginBottom:24}}>
-              <PdfDiv label={i(lang,'pdfAnalysis')}/>
-              <div style={{display:'grid',gridTemplateColumns:'1fr',gap:14}}>
+            {/* Kore Matrix */}
+            <div style={{marginBottom:28}}>
+              <PdfDiv label={i(lang,'pdfAnalysis')} accent={accent}/>
+              <div style={{display:'flex',flexDirection:'column',gap:4}}>
                 {(()=>{
                   const cfg=report.customAttrConfig;
+                  const scoreDescriptor=(v)=>{
+                    if(v>=4.5)return{label:lang==='es'?'ÉLITE':'ELITE',c:'#34D399'};
+                    if(v>=3.8)return{label:lang==='es'?'DESTACADO':'OUTSTANDING',c:'#60A5FA'};
+                    if(v>=3.2)return{label:lang==='es'?'SOBRE MEDIA':'ABOVE AVG',c:accent};
+                    if(v>=2.5)return{label:lang==='es'?'PROMEDIO':'AVERAGE',c:P.muted};
+                    return{label:lang==='es'?'EN DESARROLLO':'DEVELOPING',c:P.faint};
+                  };
+                  let groups;
                   if(cfg){
-                    // Use customAttrConfig: only enabled groups and enabled attrs
-                    return cfg.groups
+                    groups=cfg.groups
                       .filter(g=>g.attrs.some(a=>a.enabled!==false))
                       .map(g=>({g:{id:g.id,label:{es:g.label,en:g.label},
                         attrs:g.attrs.filter(a=>a.enabled!==false)
                           .map(a=>({key:a.key,label:typeof a.label==='object'?a.label:{es:a.label,en:a.label}}))},
                         color:g.color||'#FB923C'}));
+                    if(cfg.extraGroups){
+                      cfg.extraGroups.filter(g=>g.attrs.length>0).forEach(g=>{
+                        groups.push({g:{id:g.id,label:{es:g.label,en:g.label},
+                          attrs:g.attrs.map(a=>({key:a.key,label:{es:a.label,en:a.label}}))},
+                          color:g.color||'#F5A623'});
+                      });
+                    }
+                  }else{
+                    const gs=getAttrGroups(report.position);
+                    groups=[
+                      {g:gs[1],color:'#FB923C'},{g:gs[3],color:'#F5A623'},
+                      {g:gs[0],color:'#34D399'},{g:gs[2],color:'#A78BFA'},
+                    ];
                   }
-                  const groups=getAttrGroups(report.position);
-                  return[
-                    {g:groups[1],color:'#FB923C'},
-                    {g:groups[3],color:'#F5A623'},
-                    {g:groups[0],color:'#34D399'},
-                    {g:groups[2],color:'#A78BFA'},
-                  ];
+                  return groups;
                 })().map(({g,color})=>(
-                  <div key={g.id} style={{padding:'16px 14px 14px',borderRadius:9,
-                    background:P.surface,border:`1px solid ${P.border}`}}>
-                    {/* Title bar */}
-                    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:14}}>
-                      <div style={{width:3,height:14,borderRadius:1,background:color}}/>
-                      <span style={{fontSize:8.5,fontWeight:900,letterSpacing:'.18em',
-                        textTransform:'uppercase',color:P.text,
+                  <div key={g.id} style={{marginBottom:18}}>
+                    {/* Group header */}
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10,
+                      paddingBottom:6,borderBottom:`1px solid ${P.border}`}}>
+                      <div style={{width:10,height:10,borderRadius:2,background:color,flexShrink:0}}/>
+                      <span style={{fontSize:8,fontWeight:800,letterSpacing:'.2em',
+                        textTransform:'uppercase',color:color,
                         fontFamily:'Helvetica,Arial,sans-serif'}}>{typeof g.label==='object'?(g.label[lang]||g.label.es):g.label}</span>
                     </div>
-                    {/* Score bars (1-5 scale) */}
-                    <div style={{display:'flex',flexDirection:'column',gap:9}}>
-                      {g.attrs.map(({key,label})=>{
-                        const v=report.attributes[key]||0; // 1-5 scale
-                        const pct=(v/5)*100;
-                        const lStr=typeof label==='object'?(label[lang]||label.es):label;
-                        return(
-                          <div key={key} style={{display:'flex',alignItems:'center',gap:8}}>
-                            <span style={{fontSize:8.5,width:100,textAlign:'right',
-                              flexShrink:0,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif',
-                              fontWeight:600,lineHeight:1.2}}>
-                              {lStr.replace('\n',' ')}
-                            </span>
-                            <div style={{flex:1,height:6,borderRadius:3,background:P.line,
-                              boxShadow:'inset 0 1px 2px rgba(0,0,0,.4)'}}>
-                              <div style={{height:'100%',borderRadius:3,width:`${pct}%`,
-                                background:color,
-                                boxShadow:`0 1px 4px ${color}99, 0 0 6px ${color}55`}}/>
-                            </div>
-                            <span style={{fontSize:10,fontWeight:900,width:22,flexShrink:0,
-                              textAlign:'right',color,
-                              fontFamily:'Helvetica,Arial,sans-serif'}}>
-                              {v.toFixed(1)}
-                            </span>
+                    {/* Attr rows */}
+                    {g.attrs.map(({key,label})=>{
+                      const v=report.attributes[key]||0;
+                      const pct=(v/5)*100;
+                      const lStr=typeof label==='object'?(label[lang]||label.es):label;
+                      const desc=v>0?{label:'',c:P.muted}:{label:'',c:P.muted};
+                      return(
+                        <div key={key} style={{display:'flex',alignItems:'center',gap:10,
+                          padding:'5px 0'}}>
+                          <span style={{fontSize:9,width:110,flexShrink:0,color:P.muted,
+                            fontFamily:'Helvetica,Arial,sans-serif',fontWeight:600,lineHeight:1.2,
+                            textAlign:'right'}}>{lStr.replace('\n',' ')}</span>
+                          <div style={{flex:1,height:5,borderRadius:3,background:'rgba(255,255,255,0.06)'}}>
+                            <div style={{height:'100%',borderRadius:3,width:`${pct}%`,
+                              background:`linear-gradient(90deg,${color}88,${color})`,
+                              boxShadow:`0 0 8px ${color}55`}}/>
                           </div>
-                        );
-                      })}
-                    </div>
+                          <span style={{fontSize:12,fontWeight:900,width:26,flexShrink:0,
+                            textAlign:'center',color:color,
+                            fontFamily:'Helvetica,Arial,sans-serif'}}>{v>0?v.toFixed(1):'—'}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
@@ -1894,29 +1882,23 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
 
             {/* Teams */}
             {report.suggestedTeams?.length>0&&(
-              <div style={{marginBottom:24}}>
-                <PdfDiv label={i(lang,'pdfTeams')}/>
-                <div style={{borderRadius:8,overflow:'hidden',
-                  border:`1px solid ${P.border}`}}>
+              <div style={{marginBottom:28}}>
+                <PdfDiv label={i(lang,'pdfTeams')} accent={accent}/>
+                <div style={{borderRadius:8,overflow:'hidden',border:`1px solid ${P.border}`}}>
                   <div style={{display:'grid',gridTemplateColumns:'2fr 1.5fr 1fr 2fr',
-                    padding:'8px 14px',background:P.surface,
-                    borderBottom:`1px solid ${P.border}`}}>
-                    {[i(lang,'teamsClub').toUpperCase(),i(lang,'teamsCat').toUpperCase(),
-                      i(lang,'teamsLevel').toUpperCase(),i(lang,'teamsObs').toUpperCase()].map(h=>(
+                    padding:'8px 14px',background:P.surface,borderBottom:`1px solid ${P.border}`}}>
+                    {[i(lang,'teamsClub'),i(lang,'teamsCat'),i(lang,'teamsLevel'),i(lang,'teamsObs')].map(h=>(
                       <div key={h} style={{fontSize:7,fontWeight:700,letterSpacing:'.18em',
-                        color:P.faint,textTransform:'uppercase',
-                        fontFamily:'Helvetica,Arial,sans-serif'}}>{h}</div>
+                        color:P.faint,textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif'}}>{h}</div>
                     ))}
                   </div>
-                  {report.suggestedTeams.map((tm,i)=>(
-                    <div key={i} style={{display:'grid',gridTemplateColumns:'2fr 1.5fr 1fr 2fr',
-                      padding:'9px 14px',
-                      background:i%2===0?P.bg:P.surface,
-                      borderBottom:i<report.suggestedTeams.length-1?`1px solid ${P.border}`:'none'}}>
-                      <div style={{fontSize:11,color:P.text,fontWeight:700,
-                        fontFamily:'Helvetica,Arial,sans-serif'}}>{tm.club||'—'}</div>
+                  {report.suggestedTeams.map((tm,idx)=>(
+                    <div key={idx} style={{display:'grid',gridTemplateColumns:'2fr 1.5fr 1fr 2fr',
+                      padding:'10px 14px',background:idx%2===0?P.bg:P.surface,
+                      borderBottom:idx<report.suggestedTeams.length-1?`1px solid ${P.border}`:'none'}}>
+                      <div style={{fontSize:11,color:P.text,fontWeight:700,fontFamily:'Helvetica,Arial,sans-serif'}}>{tm.club||'—'}</div>
                       <div style={{fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{tm.category||'—'}</div>
-                      <div style={{fontSize:11,color:P.gold,fontWeight:700,fontFamily:'Helvetica,Arial,sans-serif'}}>{tm.estimatedLevel||'—'}</div>
+                      <div style={{fontSize:11,color:accent,fontWeight:700,fontFamily:'Helvetica,Arial,sans-serif'}}>{tm.estimatedLevel||'—'}</div>
                       <div style={{fontSize:10,color:P.faint,fontFamily:'Helvetica,Arial,sans-serif'}}>{tm.observations||'—'}</div>
                     </div>
                   ))}
@@ -1924,52 +1906,63 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
               </div>
             )}
 
-            {/* Trayectoria */}
-            {report.trayectoria?.enabled&&(
-              <div style={{marginBottom:24}}>
-                <PdfDiv label={lang==='es'?'Trayectoria':'Career History'}/>
+            {/* Trayectoria — timeline */}
+            {report.trayectoria?.enabled&&(report.trayectoria.clubs?.length>0||report.trayectoria.logros?.length>0)&&(
+              <div style={{marginBottom:28}}>
+                <PdfDiv label={lang==='es'?'HISTORIAL DE CLUBES & LOGROS':'CAREER HISTORY & ACHIEVEMENTS'} accent={accent}/>
                 {report.trayectoria.clubs?.length>0&&(
-                  <div style={{marginBottom:14,borderRadius:8,overflow:'hidden',
-                    border:`1px solid ${P.border}`}}>
-                    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',
-                      padding:'8px 14px',background:P.surface,borderBottom:`1px solid ${P.border}`}}>
-                      {['CLUB','DESDE','HASTA'].map(h=>(
-                        <div key={h} style={{fontSize:7,fontWeight:700,letterSpacing:'.18em',
-                          color:P.faint,fontFamily:'Helvetica,Arial,sans-serif'}}>{h}</div>
-                      ))}
-                    </div>
+                  <div style={{position:'relative',paddingLeft:20}}>
+                    {/* Vertical timeline line */}
+                    <div style={{position:'absolute',left:16,top:10,bottom:10,width:2,
+                      background:`linear-gradient(180deg,${accent} 0%,${accent}33 100%)`}}/>
                     {report.trayectoria.clubs.map((c,idx)=>(
-                      <div key={idx} style={{display:'flex',alignItems:'center',gap:10,
-                        padding:'9px 14px',background:idx%2===0?P.bg:P.surface,
-                        borderBottom:idx<report.trayectoria.clubs.length-1?`1px solid ${P.border}`:'none'}}>
-                        {c.img&&(
-                          <div style={{width:28,height:28,borderRadius:5,flexShrink:0,
-                            background:'#000',display:'flex',alignItems:'center',justifyContent:'center',padding:2}}>
-                            <img src={c.img} style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+                      <div key={idx} style={{display:'flex',gap:16,marginBottom:idx<report.trayectoria.clubs.length-1?16:0,
+                        position:'relative'}}>
+                        {/* Circle on timeline */}
+                        <div style={{position:'absolute',left:-10,top:12,width:12,height:12,
+                          borderRadius:'50%',background:P.bg,border:`2px solid ${accent}`,flexShrink:0}}/>
+                        {/* Club logo */}
+                        <div style={{width:44,height:44,borderRadius:8,flexShrink:0,marginLeft:6,
+                          background:'#000',border:`1px solid ${P.border}`,
+                          display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+                          {c.img
+                            ? <img src={c.img} style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+                            : <span style={{fontSize:16,color:P.faint}}>🏟</span>
+                          }
+                        </div>
+                        {/* Info */}
+                        <div style={{flex:1,paddingTop:2}}>
+                          <div style={{fontSize:9,color:accent,fontWeight:700,letterSpacing:'.05em',
+                            fontFamily:'Helvetica,Arial,sans-serif',marginBottom:2}}>
+                            {[c.from,c.to||'Presente'].filter(Boolean).join(' — ')}
                           </div>
-                        )}
-                        <div style={{flex:2,fontSize:11,color:P.text,fontWeight:700,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.name||'—'}</div>
-                        <div style={{flex:1,fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.from||'—'}</div>
-                        <div style={{flex:1,fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.to||'Presente'}</div>
+                          <div style={{fontSize:14,fontWeight:900,color:P.text,
+                            fontFamily:'Helvetica,Arial,sans-serif',lineHeight:1.2,marginBottom:4}}>
+                            {c.name||'—'}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
+                {/* Logros as badges */}
                 {report.trayectoria.logros?.length>0&&(
-                  <div style={{padding:'14px 16px',borderRadius:8,
-                    background:P.surface,border:`1px solid ${P.border}`}}>
-                    <div style={{fontSize:7.5,fontWeight:700,letterSpacing:'.15em',
-                      textTransform:'uppercase',color:P.faint,marginBottom:10,
-                      fontFamily:'Helvetica,Arial,sans-serif'}}>{lang==='es'?'LOGROS':'ACHIEVEMENTS'}</div>
-                    {report.trayectoria.logros.map((l,idx)=>(
-                      <div key={idx} style={{display:'flex',alignItems:'flex-start',gap:8,
-                        marginBottom:idx<report.trayectoria.logros.length-1?8:0}}>
-                        <div style={{width:5,height:5,borderRadius:'50%',background:P.gold,
-                          marginTop:5,flexShrink:0}}/>
-                        <span style={{fontSize:11,color:P.text,lineHeight:1.5,
-                          fontFamily:'Helvetica,Arial,sans-serif'}}>{l}</span>
-                      </div>
-                    ))}
+                  <div style={{marginTop:16}}>
+                    <div style={{fontSize:7,fontWeight:700,letterSpacing:'.2em',color:P.faint,
+                      textTransform:'uppercase',fontFamily:'Helvetica,Arial,sans-serif',marginBottom:10}}>
+                      {lang==='es'?'LOGROS & TÍTULOS':'ACHIEVEMENTS & TITLES'}
+                    </div>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+                      {report.trayectoria.logros.map((l,idx)=>(
+                        <div key={idx} style={{display:'flex',alignItems:'center',gap:6,
+                          padding:'6px 12px',borderRadius:20,
+                          background:`${accent}15`,border:`1px solid ${accent}40`}}>
+                          <div style={{width:5,height:5,borderRadius:'50%',background:accent,flexShrink:0}}/>
+                          <span style={{fontSize:10,color:P.text,fontFamily:'Helvetica,Arial,sans-serif',
+                            fontWeight:600}}>{l}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
