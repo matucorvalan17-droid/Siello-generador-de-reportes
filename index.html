@@ -377,7 +377,9 @@ function newReport(brand='siello'){
     overallScore:0,scoutingStatus:'PENDING',
     attributes:defaultAttrs(),
     executiveSummary:'',conclusionNotas:'',
-    suggestedTeams:[]};
+    suggestedTeams:[],
+    customAttrConfig:null,
+    trayectoria:{enabled:false,clubs:[],logros:[]}};
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────
@@ -822,6 +824,266 @@ function Step1({report,onChange,lang}){
 }
 
 // ─── STEP 2: EVALUATION ───────────────────────────────────────────
+// ─── STEP 2 CUSTOM: atributos configurables ────────────────────────
+function Step2Custom({report,onChange,lang}){
+  const L={
+    es:{title:'CONFIGURACIÓN DE ATRIBUTOS',on:'Visible',off:'Oculto',
+      addAttr:'+ Agregar atributo',newAttrPh:'Nombre del atributo...',
+      addGroup:'+ Nuevo grupo',groupPh:'Nombre del grupo...',
+      remove:'Eliminar',defaultGroups:'Grupos estándar',customGroups:'Grupos personalizados',
+      tip:'Activá o desactivá cada atributo. Podés agregar los tuyos propios.'},
+    en:{title:'ATTRIBUTE CONFIGURATION',on:'Visible',off:'Hidden',
+      addAttr:'+ Add attribute',newAttrPh:'Attribute name...',
+      addGroup:'+ New group',groupPh:'Group name...',
+      remove:'Remove',defaultGroups:'Standard groups',customGroups:'Custom groups',
+      tip:'Toggle each attribute. You can add your own.'},
+  }[lang];
+
+  // Build config from scratch if not yet set
+  const baseGroups=getAttrGroups(report.position);
+  const cfg=report.customAttrConfig||{
+    groups:baseGroups.map(g=>({
+      id:g.id,label:g.label[lang]||g.label.es,color:g.color,
+      attrs:g.attrs.map(a=>({key:a.key,label:typeof a.label==='object'?(a.label[lang]||a.label.es):a.label,enabled:true}))
+    })),
+    extraGroups:[]
+  };
+
+  function save(next){onChange({customAttrConfig:next});}
+
+  function toggleAttr(gIdx,aIdx){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.groups[gIdx].attrs[aIdx].enabled=!next.groups[gIdx].attrs[aIdx].enabled;
+    save(next);
+  }
+  function addAttr(gIdx){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.groups[gIdx].attrs.push({key:'custom_'+Date.now(),label:'',enabled:true,custom:true});
+    save(next);
+  }
+  function updateAttrLabel(gIdx,aIdx,label){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.groups[gIdx].attrs[aIdx].label=label;
+    save(next);
+  }
+  function removeAttr(gIdx,aIdx){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.groups[gIdx].attrs.splice(aIdx,1);
+    save(next);
+  }
+  function addExtraGroup(){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.extraGroups.push({id:'eg_'+Date.now(),label:'',color:'#F5A623',attrs:[]});
+    save(next);
+  }
+  function updateExtraGroupLabel(i,label){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.extraGroups[i].label=label;
+    save(next);
+  }
+  function removeExtraGroup(i){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.extraGroups.splice(i,1);
+    save(next);
+  }
+  function addExtraAttr(i){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.extraGroups[i].attrs.push({key:'ceg_'+Date.now(),label:'',enabled:true,custom:true});
+    save(next);
+  }
+  function updateExtraAttrLabel(gi,ai,label){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.extraGroups[gi].attrs[ai].label=label;
+    save(next);
+  }
+  function removeExtraAttr(gi,ai){
+    const next=JSON.parse(JSON.stringify(cfg));
+    next.extraGroups[gi].attrs.splice(ai,1);
+    save(next);
+  }
+
+  const colors=['#F5A623','#14B8A6','#FB923C','#A78BFA','#34D399','#60A5FA'];
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:18}}>
+      <div style={{fontSize:9,color:'var(--muted)',letterSpacing:'.06em'}}>{L.tip}</div>
+
+      {/* Standard groups */}
+      {cfg.groups.map((g,gIdx)=>(
+        <div key={g.id}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <div style={{width:3,height:14,borderRadius:2,background:g.color}}/>
+            <span style={{fontSize:11,fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text)'}}>{g.label}</span>
+          </div>
+          <div className="card" style={{padding:12,display:'flex',flexDirection:'column',gap:8}}>
+            {g.attrs.map((a,aIdx)=>(
+              <div key={a.key} style={{display:'flex',alignItems:'center',gap:8}}>
+                <button onClick={()=>toggleAttr(gIdx,aIdx)}
+                  style={{width:44,height:22,borderRadius:11,border:'none',cursor:'pointer',flexShrink:0,
+                    background:a.enabled?g.color:'var(--surface3)',
+                    position:'relative',transition:'background .2s'}}>
+                  <div style={{position:'absolute',top:3,width:16,height:16,borderRadius:'50%',background:'#fff',
+                    transition:'left .2s',left:a.enabled?'calc(100% - 19px)':'3px'}}/>
+                </button>
+                {a.custom
+                  ? <input className="input-field" value={a.label} placeholder={L.newAttrPh}
+                      style={{flex:1,fontSize:11,padding:'4px 8px'}}
+                      onChange={e=>updateAttrLabel(gIdx,aIdx,e.target.value)}/>
+                  : <span style={{flex:1,fontSize:11,color:a.enabled?'var(--text)':'var(--dim)'}}>{a.label}</span>
+                }
+                {a.custom&&(
+                  <button onClick={()=>removeAttr(gIdx,aIdx)}
+                    style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:14,padding:'0 4px'}}
+                    onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                    onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>×</button>
+                )}
+              </div>
+            ))}
+            <button className="btn-ghost" style={{fontSize:10,padding:'5px 8px',marginTop:4,alignSelf:'flex-start'}}
+              onClick={()=>addAttr(gIdx)}>{L.addAttr}</button>
+          </div>
+        </div>
+      ))}
+
+      {/* Extra custom groups */}
+      {cfg.extraGroups.map((g,i)=>(
+        <div key={g.id}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <div style={{width:3,height:14,borderRadius:2,background:g.color||'#F5A623'}}/>
+            <input className="input-field" value={g.label} placeholder={L.groupPh}
+              style={{flex:1,fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'3px 8px'}}
+              onChange={e=>updateExtraGroupLabel(i,e.target.value)}/>
+            <div style={{display:'flex',gap:3}}>
+              {colors.map(c=>(
+                <div key={c} onClick={()=>{const n=JSON.parse(JSON.stringify(cfg));n.extraGroups[i].color=c;save(n);}}
+                  style={{width:14,height:14,borderRadius:'50%',background:c,cursor:'pointer',
+                    border:g.color===c?'2px solid #fff':'2px solid transparent'}}/>
+              ))}
+            </div>
+            <button onClick={()=>removeExtraGroup(i)}
+              style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:16,padding:'0 4px'}}
+              onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+              onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>×</button>
+          </div>
+          <div className="card" style={{padding:12,display:'flex',flexDirection:'column',gap:8}}>
+            {g.attrs.map((a,ai)=>(
+              <div key={a.key} style={{display:'flex',alignItems:'center',gap:8}}>
+                <input className="input-field" value={a.label} placeholder={L.newAttrPh}
+                  style={{flex:1,fontSize:11,padding:'4px 8px'}}
+                  onChange={e=>updateExtraAttrLabel(i,ai,e.target.value)}/>
+                <button onClick={()=>removeExtraAttr(i,ai)}
+                  style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:14,padding:'0 4px'}}
+                  onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                  onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>×</button>
+              </div>
+            ))}
+            <button className="btn-ghost" style={{fontSize:10,padding:'5px 8px',marginTop:4,alignSelf:'flex-start'}}
+              onClick={()=>addExtraAttr(i)}>{L.addAttr}</button>
+          </div>
+        </div>
+      ))}
+
+      <button className="btn-ghost" style={{fontSize:11,padding:'8px 14px',border:'1px dashed var(--gold)',color:'var(--gold)'}}
+        onClick={addExtraGroup}>{L.addGroup}</button>
+    </div>
+  );
+}
+
+// ─── STEP TRAYECTORIA (custom only) ───────────────────────────────
+function StepTrayectoria({report,onChange,lang}){
+  const T=report.trayectoria||{enabled:false,clubs:[],logros:[]};
+  const upd=(u)=>onChange({trayectoria:{...T,...u}});
+  const L={
+    es:{toggle:'Mostrar sección Trayectoria en el reporte',
+      clubs:'HISTORIAL DE CLUBES',addClub:'+ Agregar club',
+      clubPh:'Club...',fromPh:'Desde (ej: 2020)',toPh:'Hasta (ej: 2023)',
+      logros:'LOGROS / TÍTULOS',addLogro:'+ Agregar logro',
+      logroPh:'Ej: Campeón Sub-17 Copa Argentina 2022...',
+      remove:'Eliminar'},
+    en:{toggle:'Show Career section in the report',
+      clubs:'CLUB HISTORY',addClub:'+ Add club',
+      clubPh:'Club...',fromPh:'From (e.g. 2020)',toPh:'To (e.g. 2023)',
+      logros:'ACHIEVEMENTS / TITLES',addLogro:'+ Add achievement',
+      logroPh:'E.g. U-17 Champion Copa Argentina 2022...',
+      remove:'Remove'},
+  }[lang];
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:18}}>
+      {/* Toggle */}
+      <div className="card" style={{padding:14,display:'flex',alignItems:'center',gap:12}}>
+        <button onClick={()=>upd({enabled:!T.enabled})}
+          style={{width:44,height:24,borderRadius:12,border:'none',cursor:'pointer',flexShrink:0,
+            background:T.enabled?'#F5A623':'var(--surface3)',position:'relative',transition:'background .2s'}}>
+          <div style={{position:'absolute',top:4,width:16,height:16,borderRadius:'50%',background:'#fff',
+            transition:'left .2s',left:T.enabled?'calc(100% - 20px)':'4px'}}/>
+        </button>
+        <span style={{fontSize:12,fontWeight:600,color:'var(--text)'}}>{L.toggle}</span>
+      </div>
+
+      {T.enabled&&(
+        <>
+          {/* Clubs */}
+          <div>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+              <div style={{width:3,height:14,borderRadius:2,background:'#F5A623'}}/>
+              <span style={{fontSize:11,fontWeight:700,letterSpacing:'.1em',color:'var(--text)'}}>{L.clubs}</span>
+            </div>
+            <div className="card" style={{padding:12,display:'flex',flexDirection:'column',gap:10}}>
+              {(T.clubs||[]).map((c,i)=>(
+                <div key={i} style={{display:'flex',gap:6,alignItems:'flex-start'}}>
+                  <div style={{flex:1,display:'flex',gap:6}}>
+                    <input className="input-field" value={c.name||''} placeholder={L.clubPh}
+                      style={{flex:2,fontSize:11}} onChange={e=>{
+                        const next=[...T.clubs];next[i]={...c,name:e.target.value};upd({clubs:next});}}/>
+                    <input className="input-field" value={c.from||''} placeholder={L.fromPh}
+                      style={{width:80,fontSize:11}} onChange={e=>{
+                        const next=[...T.clubs];next[i]={...c,from:e.target.value};upd({clubs:next});}}/>
+                    <input className="input-field" value={c.to||''} placeholder={L.toPh}
+                      style={{width:80,fontSize:11}} onChange={e=>{
+                        const next=[...T.clubs];next[i]={...c,to:e.target.value};upd({clubs:next});}}/>
+                  </div>
+                  <button onClick={()=>upd({clubs:T.clubs.filter((_,j)=>j!==i)})}
+                    style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:16,padding:'4px'}}
+                    onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                    onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>×</button>
+                </div>
+              ))}
+              <button className="btn-ghost" style={{fontSize:10,padding:'5px 8px',alignSelf:'flex-start'}}
+                onClick={()=>upd({clubs:[...(T.clubs||[]),{name:'',from:'',to:''}]})}>{L.addClub}</button>
+            </div>
+          </div>
+
+          {/* Logros */}
+          <div>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+              <div style={{width:3,height:14,borderRadius:2,background:'#14B8A6'}}/>
+              <span style={{fontSize:11,fontWeight:700,letterSpacing:'.1em',color:'var(--text)'}}>{L.logros}</span>
+            </div>
+            <div className="card" style={{padding:12,display:'flex',flexDirection:'column',gap:8}}>
+              {(T.logros||[]).map((lg,i)=>(
+                <div key={i} style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <input className="input-field" value={lg||''} placeholder={L.logroPh}
+                    style={{flex:1,fontSize:11}} onChange={e=>{
+                      const next=[...T.logros];next[i]=e.target.value;upd({logros:next});}}/>
+                  <button onClick={()=>upd({logros:T.logros.filter((_,j)=>j!==i)})}
+                    style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:16,padding:'4px'}}
+                    onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                    onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>×</button>
+                </div>
+              ))}
+              <button className="btn-ghost" style={{fontSize:10,padding:'5px 8px',alignSelf:'flex-start'}}
+                onClick={()=>upd({logros:[...(T.logros||[]),'']})}>
+                {L.addLogro}</button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── STEP 2 STANDARD ──────────────────────────────────────────────
 function Step2({report,onChange,lang}){
   const upd=(k,v)=>onChange({attributes:{...report.attributes,[k]:v}});
   const groups=getAttrGroups(report.position);
@@ -957,8 +1219,8 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingCh
   }
   function handleSave(){setSaved(true);setTimeout(()=>setSaved(false),2200)}
   const STEPS=(isCustom
-    ?{es:['Personalización','Datos','Evaluación','Textos','Equipos'],
-      en:['Branding','Player','Evaluation','Text','Teams']}
+    ?{es:['Personalización','Datos','Atributos','Evaluación','Trayectoria','Textos','Equipos'],
+      en:['Branding','Player','Attributes','Evaluation','Career','Text','Teams']}
     :{es:['Datos','Evaluación','Textos','Equipos'],
       en:['Player','Evaluation','Text','Teams']})[lang];
   const lastStep=STEPS.length-1;
@@ -995,9 +1257,11 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingCh
         {isCustom&&step===0&&
           <CustomBranding lang={lang} branding={branding} onChange={onBrandingChange}/>}
         {step-offset===0&&<Step1 report={report} onChange={handleChange} lang={lang}/>}
-        {step-offset===1&&<Step2 report={report} onChange={handleChange} lang={lang}/>}
-        {step-offset===2&&<Step3 report={report} onChange={handleChange} lang={lang}/>}
-        {step-offset===3&&<Step4 report={report} onChange={handleChange} lang={lang}/>}
+        {isCustom&&step-offset===1&&<Step2Custom report={report} onChange={handleChange} lang={lang}/>}
+        {(isCustom?step-offset===2:step-offset===1)&&<Step2 report={report} onChange={handleChange} lang={lang}/>}
+        {isCustom&&step-offset===3&&<StepTrayectoria report={report} onChange={handleChange} lang={lang}/>}
+        {(isCustom?step-offset===4:step-offset===2)&&<Step3 report={report} onChange={handleChange} lang={lang}/>}
+        {(isCustom?step-offset===5:step-offset===3)&&<Step4 report={report} onChange={handleChange} lang={lang}/>}
       </div>
       {/* Footer */}
       <div style={{padding:'12px 20px',borderTop:'1px solid var(--border)',
@@ -1498,12 +1762,25 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
             <div style={{marginBottom:24}}>
               <PdfDiv label={i(lang,'pdfAnalysis')}/>
               <div style={{display:'grid',gridTemplateColumns:'1fr',gap:14}}>
-                {(()=>{const groups=getAttrGroups(report.position);return[
-                  {g:groups[1],color:'#FB923C'},
-                  {g:groups[3],color:'#F5A623'},
-                  {g:groups[0],color:'#34D399'},
-                  {g:groups[2],color:'#A78BFA'},
-                ];})().map(({g,color})=>(
+                {(()=>{
+                  const cfg=report.customAttrConfig;
+                  if(cfg){
+                    // Use customAttrConfig: only enabled groups and enabled attrs
+                    return cfg.groups
+                      .filter(g=>g.attrs.some(a=>a.enabled!==false))
+                      .map(g=>({g:{id:g.id,label:{es:g.label,en:g.label},
+                        attrs:g.attrs.filter(a=>a.enabled!==false)
+                          .map(a=>({key:a.key,label:typeof a.label==='object'?a.label:{es:a.label,en:a.label}}))},
+                        color:g.color||'#FB923C'}));
+                  }
+                  const groups=getAttrGroups(report.position);
+                  return[
+                    {g:groups[1],color:'#FB923C'},
+                    {g:groups[3],color:'#F5A623'},
+                    {g:groups[0],color:'#34D399'},
+                    {g:groups[2],color:'#A78BFA'},
+                  ];
+                })().map(({g,color})=>(
                   <div key={g.id} style={{padding:'16px 14px 14px',borderRadius:9,
                     background:P.surface,border:`1px solid ${P.border}`}}>
                     {/* Title bar */}
@@ -1511,7 +1788,7 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                       <div style={{width:3,height:14,borderRadius:1,background:color}}/>
                       <span style={{fontSize:8.5,fontWeight:900,letterSpacing:'.18em',
                         textTransform:'uppercase',color:P.text,
-                        fontFamily:'Helvetica,Arial,sans-serif'}}>{g.label[lang]}</span>
+                        fontFamily:'Helvetica,Arial,sans-serif'}}>{typeof g.label==='object'?(g.label[lang]||g.label.es):g.label}</span>
                     </div>
                     {/* Score bars (1-5 scale) */}
                     <div style={{display:'flex',flexDirection:'column',gap:9}}>
@@ -1575,6 +1852,51 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Trayectoria */}
+            {report.trayectoria?.enabled&&(
+              <div style={{marginBottom:24}}>
+                <PdfDiv label={lang==='es'?'Trayectoria':'Career History'}/>
+                {report.trayectoria.clubs?.length>0&&(
+                  <div style={{marginBottom:14,borderRadius:8,overflow:'hidden',
+                    border:`1px solid ${P.border}`}}>
+                    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',
+                      padding:'8px 14px',background:P.surface,borderBottom:`1px solid ${P.border}`}}>
+                      {['CLUB','DESDE','HASTA'].map(h=>(
+                        <div key={h} style={{fontSize:7,fontWeight:700,letterSpacing:'.18em',
+                          color:P.faint,fontFamily:'Helvetica,Arial,sans-serif'}}>{h}</div>
+                      ))}
+                    </div>
+                    {report.trayectoria.clubs.map((c,idx)=>(
+                      <div key={idx} style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',
+                        padding:'9px 14px',background:idx%2===0?P.bg:P.surface,
+                        borderBottom:idx<report.trayectoria.clubs.length-1?`1px solid ${P.border}`:'none'}}>
+                        <div style={{fontSize:11,color:P.text,fontWeight:700,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.name||'—'}</div>
+                        <div style={{fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.from||'—'}</div>
+                        <div style={{fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.to||'Presente'}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {report.trayectoria.logros?.length>0&&(
+                  <div style={{padding:'14px 16px',borderRadius:8,
+                    background:P.surface,border:`1px solid ${P.border}`}}>
+                    <div style={{fontSize:7.5,fontWeight:700,letterSpacing:'.15em',
+                      textTransform:'uppercase',color:P.faint,marginBottom:10,
+                      fontFamily:'Helvetica,Arial,sans-serif'}}>{lang==='es'?'LOGROS':'ACHIEVEMENTS'}</div>
+                    {report.trayectoria.logros.map((l,idx)=>(
+                      <div key={idx} style={{display:'flex',alignItems:'flex-start',gap:8,
+                        marginBottom:idx<report.trayectoria.logros.length-1?8:0}}>
+                        <div style={{width:5,height:5,borderRadius:'50%',background:P.gold,
+                          marginTop:5,flexShrink:0}}/>
+                        <span style={{fontSize:11,color:P.text,lineHeight:1.5,
+                          fontFamily:'Helvetica,Arial,sans-serif'}}>{l}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
