@@ -379,6 +379,7 @@ function newReport(brand='siello'){
     executiveSummary:'',conclusionNotas:'',
     suggestedTeams:[],
     customAttrConfig:null,
+    available:'',budget:'',
     trayectoria:{enabled:false,clubs:[],logros:[]}};
 }
 
@@ -756,11 +757,13 @@ function Step1({report,onChange,lang}){
     es:{photo:'Foto del Jugador',logo:'Logo del Club',name:'Nombre Completo',
       dob:'Fecha de Nacimiento',nat:'Nacionalidad',pos:'Posición',foot:'Pie Dominante',
       club:'Club Actual',h:'Altura (cm)',w:'Peso (kg)',date:'Fecha de Evaluación',
-      status:'Estado del Scouting',score:'Score General',sel:'Seleccionar posición'},
+      status:'Estado del Scouting',score:'Score General',sel:'Seleccionar posición',
+      available:'Disponible (temporada/año)',budget:'Presupuesto'},
     en:{photo:'Player Photo',logo:'Club Logo',name:'Full Name',
       dob:'Date of Birth',nat:'Nationality',pos:'Position',foot:'Dominant Foot',
       club:'Current Club',h:'Height (cm)',w:'Weight (kg)',date:'Evaluation Date',
-      status:'Scouting Status',score:'Overall Score',sel:'Select position'},
+      status:'Scouting Status',score:'Overall Score',sel:'Select position',
+      available:'Available (season/year)',budget:'Budget'},
   }[lang];
 
   return(
@@ -776,6 +779,10 @@ function Step1({report,onChange,lang}){
         <div style={{fontSize:10,fontWeight:700,letterSpacing:'.15em',color:'var(--muted)',marginBottom:12}}>DATOS DEL JUGADOR</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           <div><Lbl text={L.name}/><input className="input-field" value={report.playerName} onChange={u('playerName')} placeholder="Carlos García"/></div>
+          <div><Lbl text={L.available}/><input className="input-field" value={report.available||''} onChange={u('available')} placeholder={lang==='es'?'Ej: Spring 2026':'E.g. Spring 2026'}/></div>
+          <div><Lbl text={L.budget}/><input className="input-field" value={report.budget||''} onChange={u('budget')} placeholder={lang==='es'?'Ej: $500k - $1M':'E.g. $500k - $1M'}/></div>
+          <div><Lbl text={L.h}/><input type="number" className="input-field" value={report.height} onChange={u('height')} placeholder="176"/></div>
+          <div><Lbl text={L.w}/><input type="number" className="input-field" value={report.weight} onChange={u('weight')} placeholder="72"/></div>
           <div><Lbl text={L.dob}/><input type="date" className="input-field" value={report.dateOfBirth} onChange={u('dateOfBirth')}/></div>
           <div>
             <Lbl text={L.nat}/>
@@ -813,8 +820,6 @@ function Step1({report,onChange,lang}){
             </div>
           </div>
           <div><Lbl text={L.club}/><input className="input-field" value={report.currentClub} onChange={u('currentClub')} placeholder="Club XYZ"/></div>
-          <div><Lbl text={L.h}/><input type="number" className="input-field" value={report.height} onChange={u('height')} placeholder="176"/></div>
-          <div><Lbl text={L.w}/><input type="number" className="input-field" value={report.weight} onChange={u('weight')} placeholder="72"/></div>
           <div><Lbl text={L.date}/><input type="date" className="input-field" value={report.evaluationDate} onChange={u('evaluationDate')}/></div>
         </div>
       </div>
@@ -931,12 +936,10 @@ function Step2Custom({report,onChange,lang}){
                       onChange={e=>updateAttrLabel(gIdx,aIdx,e.target.value)}/>
                   : <span style={{flex:1,fontSize:11,color:a.enabled?'var(--text)':'var(--dim)'}}>{a.label}</span>
                 }
-                {a.custom&&(
-                  <button onClick={()=>removeAttr(gIdx,aIdx)}
-                    style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:14,padding:'0 4px'}}
-                    onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
-                    onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>×</button>
-                )}
+                <button onClick={()=>removeAttr(gIdx,aIdx)}
+                  style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:14,padding:'0 4px'}}
+                  onMouseEnter={e=>e.currentTarget.style.color='var(--red)'}
+                  onMouseLeave={e=>e.currentTarget.style.color='var(--dim)'}>×</button>
               </div>
             ))}
             <button className="btn-ghost" style={{fontSize:10,padding:'5px 8px',marginTop:4,alignSelf:'flex-start'}}
@@ -1031,17 +1034,38 @@ function StepTrayectoria({report,onChange,lang}){
             </div>
             <div className="card" style={{padding:12,display:'flex',flexDirection:'column',gap:10}}>
               {(T.clubs||[]).map((c,i)=>(
-                <div key={i} style={{display:'flex',gap:6,alignItems:'flex-start'}}>
-                  <div style={{flex:1,display:'flex',gap:6}}>
+                <div key={i} style={{display:'flex',gap:6,alignItems:'flex-start',
+                  padding:'10px',borderRadius:8,background:'var(--surface2)'}}>
+                  {/* Club logo/image */}
+                  <label style={{cursor:'pointer',flexShrink:0}}>
+                    <div style={{width:44,height:44,borderRadius:8,overflow:'hidden',
+                      background:'var(--surface3)',border:'1px dashed var(--border)',
+                      display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      {c.img
+                        ? <img src={c.img} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                        : <span style={{fontSize:18,color:'var(--dim)'}}>🏟</span>
+                      }
+                    </div>
+                    <input type="file" accept="image/*" style={{display:'none'}}
+                      onChange={e=>{
+                        const f=e.target.files[0];if(!f)return;
+                        const r=new FileReader();
+                        r.onload=ev=>{const next=[...T.clubs];next[i]={...c,img:ev.target.result};upd({clubs:next});};
+                        r.readAsDataURL(f);
+                      }}/>
+                  </label>
+                  <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
                     <input className="input-field" value={c.name||''} placeholder={L.clubPh}
-                      style={{flex:2,fontSize:11}} onChange={e=>{
+                      style={{fontSize:11}} onChange={e=>{
                         const next=[...T.clubs];next[i]={...c,name:e.target.value};upd({clubs:next});}}/>
-                    <input className="input-field" value={c.from||''} placeholder={L.fromPh}
-                      style={{width:80,fontSize:11}} onChange={e=>{
-                        const next=[...T.clubs];next[i]={...c,from:e.target.value};upd({clubs:next});}}/>
-                    <input className="input-field" value={c.to||''} placeholder={L.toPh}
-                      style={{width:80,fontSize:11}} onChange={e=>{
-                        const next=[...T.clubs];next[i]={...c,to:e.target.value};upd({clubs:next});}}/>
+                    <div style={{display:'flex',gap:6}}>
+                      <input className="input-field" value={c.from||''} placeholder={L.fromPh}
+                        style={{flex:1,fontSize:11}} onChange={e=>{
+                          const next=[...T.clubs];next[i]={...c,from:e.target.value};upd({clubs:next});}}/>
+                      <input className="input-field" value={c.to||''} placeholder={L.toPh}
+                        style={{flex:1,fontSize:11}} onChange={e=>{
+                          const next=[...T.clubs];next[i]={...c,to:e.target.value};upd({clubs:next});}}/>
+                    </div>
                   </div>
                   <button onClick={()=>upd({clubs:T.clubs.filter((_,j)=>j!==i)})}
                     style={{background:'none',border:'none',cursor:'pointer',color:'var(--dim)',fontSize:16,padding:'4px'}}
@@ -1219,10 +1243,10 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingCh
   }
   function handleSave(){setSaved(true);setTimeout(()=>setSaved(false),2200)}
   const STEPS=(isCustom
-    ?{es:['Personalización','Datos','Atributos','Evaluación','Trayectoria','Textos','Equipos'],
-      en:['Branding','Player','Attributes','Evaluation','Career','Text','Teams']}
-    :{es:['Datos','Evaluación','Textos','Equipos'],
-      en:['Player','Evaluation','Text','Teams']})[lang];
+    ?{es:['Personalización','Datos','Atributos','Puntajes','Trayectoria','Textos','Equipos'],
+      en:['Branding','Player','Attributes','Scores','Career','Text','Teams']}
+    :{es:['Datos','Atributos','Textos','Equipos'],
+      en:['Player','Attributes','Text','Teams']})[lang];
   const lastStep=STEPS.length-1;
   const offset=isCustom?1:0;
   function handleNext(){handleSave();if(step<lastStep)setStep(s=>s+1)}
@@ -1744,6 +1768,27 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                   </div>
                 </div>
               </div>
+              {/* Available / Budget / Height / Weight — extra row */}
+              {(report.available||report.budget||report.height||report.weight)&&(
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginTop:8}}>
+                  {[
+                    report.available&&{label:lang==='es'?'DISPONIBLE':'AVAILABLE',value:report.available,c:'#34D399'},
+                    report.budget&&{label:lang==='es'?'PRESUPUESTO':'BUDGET',value:report.budget,c:'#60A5FA'},
+                    report.height&&{label:lang==='es'?'ALTURA':'HEIGHT',value:`${report.height} cm`,c:P.muted},
+                    report.weight&&{label:lang==='es'?'PESO':'WEIGHT',value:`${report.weight} kg`,c:P.muted},
+                  ].filter(Boolean).map(card=>(
+                    <div key={card.label} style={{padding:'11px 13px',borderRadius:7,
+                      background:P.surface,border:`1px solid ${P.border}`,
+                      borderTop:`2px solid ${card.c}`}}>
+                      <div style={{fontSize:7,fontWeight:700,letterSpacing:'.18em',
+                        color:card.c,marginBottom:5,textTransform:'uppercase',
+                        fontFamily:'Helvetica,Arial,sans-serif'}}>{card.label}</div>
+                      <div style={{fontFamily:'Helvetica,Arial,sans-serif',fontWeight:900,
+                        fontSize:14,color:P.text,lineHeight:1.1}}>{card.value}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Executive Summary */}
@@ -1870,12 +1915,16 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                       ))}
                     </div>
                     {report.trayectoria.clubs.map((c,idx)=>(
-                      <div key={idx} style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',
+                      <div key={idx} style={{display:'flex',alignItems:'center',gap:10,
                         padding:'9px 14px',background:idx%2===0?P.bg:P.surface,
                         borderBottom:idx<report.trayectoria.clubs.length-1?`1px solid ${P.border}`:'none'}}>
-                        <div style={{fontSize:11,color:P.text,fontWeight:700,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.name||'—'}</div>
-                        <div style={{fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.from||'—'}</div>
-                        <div style={{fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.to||'Presente'}</div>
+                        {c.img&&(
+                          <img src={c.img} style={{width:24,height:24,objectFit:'contain',
+                            borderRadius:4,flexShrink:0,background:'#fff',padding:2}}/>
+                        )}
+                        <div style={{flex:2,fontSize:11,color:P.text,fontWeight:700,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.name||'—'}</div>
+                        <div style={{flex:1,fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.from||'—'}</div>
+                        <div style={{flex:1,fontSize:11,color:P.muted,fontFamily:'Helvetica,Arial,sans-serif'}}>{c.to||'Presente'}</div>
                       </div>
                     ))}
                   </div>
