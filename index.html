@@ -869,8 +869,8 @@ function Step1({report,onChange,lang}){
                 ))}
               </div>
             </div>
-            <input type="number" className="input-field" value={report.height} onChange={u('height')}
-              placeholder={(report.heightUnit||'cm')==='cm'?'176':'5.10'}/>
+            <input type={(report.heightUnit||'cm')==='cm'?'number':'text'} className="input-field" value={report.height} onChange={u('height')}
+              placeholder={(report.heightUnit||'cm')==='cm'?'176':'5\'10"'}/>
           </div>
           <div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
