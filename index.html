@@ -3138,7 +3138,28 @@ function App(){
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+class ErrorBoundary extends React.Component{
+  constructor(p){super(p);this.state={err:null,info:null};}
+  static getDerivedStateFromError(e){return{err:e};}
+  componentDidCatch(e,i){this.setState({err:e,info:i});}
+  render(){
+    if(this.state.err){
+      return(
+        <div style={{padding:32,fontFamily:'monospace',background:'#0a0a0a',color:'#fff',minHeight:'100vh'}}>
+          <div style={{color:'#F87171',fontSize:18,fontWeight:700,marginBottom:12}}>Error de React</div>
+          <pre style={{color:'#FCA5A5',whiteSpace:'pre-wrap',marginBottom:16,fontSize:12}}>
+            {String(this.state.err)}
+          </pre>
+          <pre style={{color:'#6B7280',whiteSpace:'pre-wrap',fontSize:11}}>
+            {this.state.info&&this.state.info.componentStack}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
 </script>
 </body>
 </html>
