@@ -40,6 +40,20 @@ input[type=range]:focus{outline:none}
 </head>
 <body>
 <div id="root"></div>
+<div id="err" style="display:none;position:fixed;inset:0;z-index:99999;background:#dc2626;color:#fff;padding:24px;font-family:monospace;overflow:auto;font-size:13px"></div>
+<script>
+window.onerror=function(m,s,l,c,e){
+  var d=document.getElementById('err');
+  d.style.display='block';
+  d.innerHTML='<b style="font-size:20px">ERROR</b><br><br>'+m+'<br><br>'+s+':'+l+':'+c+'<br><br>'+(e&&e.stack?e.stack:'');
+  return true;
+};
+window.onunhandledrejection=function(e){
+  var d=document.getElementById('err');
+  d.style.display='block';
+  d.innerHTML='<b style="font-size:20px">PROMISE ERROR</b><br><br>'+(e.reason?String(e.reason):'unknown');
+};
+</script>
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
