@@ -1101,7 +1101,7 @@ function Step2Custom({report,onChange,lang}){
         <div key={g.id}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
             <div style={{width:3,height:14,borderRadius:2,background:g.color}}/>
-            <span style={{fontSize:11,fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text)'}}>{g.label}</span>
+            <span style={{fontSize:11,fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'var(--text)'}}>{typeof g.label==='object'?(g.label[lang]||g.label.es):g.label}</span>
           </div>
           <div className="card" style={{padding:12,display:'flex',flexDirection:'column',gap:8}}>
             {g.attrs.map((a,aIdx)=>(
