@@ -1055,7 +1055,7 @@ function Step2Custom({report,onChange,lang}){
         }))
       }));
       return{groups,extraGroups};
-    }catch{return null;}
+    }catch(e){return null;}
   }
   const rawCfg=report.customAttrConfig;
   const cfg=sanitizeCfg(rawCfg)||{
@@ -1664,7 +1664,7 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
         const r=await fetch(url,{mode:'cors'});
         const b=await r.blob();
         return new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);});
-      }catch{return null;}
+      }catch(e){return null;}
     }
 
     // ── KEY FIX: clone into an off-screen fixed container at left:0 ──
