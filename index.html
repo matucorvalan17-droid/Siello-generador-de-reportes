@@ -3167,34 +3167,31 @@ function App(){
   );
 }
 
+window.onerror=function(msg,src,line,col,err){
+  document.body.innerHTML='<div style="position:fixed;inset:0;background:#dc2626;color:#fff;padding:24px;font-family:monospace;overflow:auto;z-index:99999"><div style="font-size:20px;font-weight:900;margin-bottom:12px">ERROR JS</div><pre style="font-size:12px;white-space:pre-wrap">'+String(msg)+'\n'+String(src)+':'+line+':'+col+'</pre></div>';
+};
 class ErrorBoundary extends React.Component{
-  constructor(p){super(p);this.state={err:null,info:null};}
-  static getDerivedStateFromError(e){return{err:e};}
+  constructor(p){super(p);this.state={err:null,stack:''};}
+  static getDerivedStateFromError(e){return{err:String(e)};}
   componentDidCatch(e,i){
-    console.error('=== REACT CRASH ===',e,i?.componentStack);
-    this.setState({err:e,info:i});
+    var s='';try{s=i&&i.componentStack?i.componentStack:'';}catch(x){}
+    console.error('REACT CRASH',e,s);
+    this.setState({err:String(e),stack:s});
   }
   render(){
     if(this.state.err){
-      const msg=String(this.state.err);
-      const stack=this.state.info?.componentStack||'';
-      return(
-        <div style={{position:'fixed',inset:0,zIndex:99999,background:'#dc2626',
-          color:'#fff',padding:24,overflowY:'auto',fontFamily:'monospace'}}>
-          <div style={{fontSize:22,fontWeight:900,marginBottom:16}}>
-            ⚠ ERROR — copiá esto y mandáselo al dev
-          </div>
-          <div style={{background:'rgba(0,0,0,.4)',padding:16,borderRadius:8,marginBottom:12,
-            fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all'}}>{msg}</div>
-          <div style={{background:'rgba(0,0,0,.3)',padding:16,borderRadius:8,
-            fontSize:11,whiteSpace:'pre-wrap',wordBreak:'break-all',color:'#fca5a5'}}>{stack}</div>
-        </div>
+      return React.createElement('div',
+        {style:{position:'fixed',inset:0,zIndex:99999,background:'#dc2626',color:'#fff',
+          padding:24,overflowY:'auto',fontFamily:'monospace'}},
+        React.createElement('div',{style:{fontSize:20,fontWeight:900,marginBottom:12}},'ERROR REACT'),
+        React.createElement('pre',{style:{fontSize:12,whiteSpace:'pre-wrap',background:'rgba(0,0,0,.4)',padding:12,borderRadius:6,marginBottom:8}},this.state.err),
+        React.createElement('pre',{style:{fontSize:10,whiteSpace:'pre-wrap',color:'#fca5a5'}},this.state.stack)
       );
     }
     return this.props.children;
   }
 }
-ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(ErrorBoundary,null,React.createElement(App)));
 </script>
 </body>
 </html>
