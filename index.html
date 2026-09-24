@@ -26,16 +26,19 @@ input[type=range]::-webkit-slider-track{background:var(--surface3);height:4px;bo
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;background:var(--gold);height:12px;width:12px;border-radius:50%;margin-top:-4px;box-shadow:0 0 4px rgba(245,166,35,.35)}
 input[type=range]:focus{outline:none}
 .grid-bg{background-image:linear-gradient(rgba(245,166,35,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(245,166,35,.015) 1px,transparent 1px);background-size:32px 32px}
-.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#000;border:none;cursor:pointer;font-family:var(--font);font-weight:700;border-radius:8px;transition:opacity .15s,transform .1s}
-.btn-gold:hover{opacity:.88}
-.btn-gold:active{transform:scale(.97)}
-.btn-ghost{background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:var(--font);border-radius:8px;transition:all .15s}
-.btn-ghost:hover{border-color:var(--borderl);color:var(--text)}
-.input-field{background:var(--surface3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;width:100%;font-family:var(--font)}
-.input-field:focus{border-color:rgba(245,166,35,.5);outline:none;box-shadow:0 0 0 2px rgba(245,166,35,.08)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#000;border:none;cursor:pointer;font-family:var(--font);font-weight:700;border-radius:8px;transition:opacity .18s,transform .12s,box-shadow .18s;box-shadow:0 2px 8px rgba(245,166,35,.18)}
+.btn-gold:hover{opacity:.9;box-shadow:0 4px 16px rgba(245,166,35,.32);transform:translateY(-1px)}
+.btn-gold:active{transform:scale(.96) translateY(0);box-shadow:0 1px 4px rgba(245,166,35,.12)}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:var(--font);border-radius:8px;transition:border-color .15s,color .15s,background .15s,box-shadow .15s,transform .1s}
+.btn-ghost:hover{border-color:var(--borderl);color:var(--text);background:var(--surface3)}
+.btn-ghost:active{transform:scale(.97)}
+.input-field{background:var(--surface3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;width:100%;font-family:var(--font);transition:border-color .15s,box-shadow .15s}
+.input-field:focus{border-color:rgba(245,166,35,.5);outline:none;box-shadow:0 0 0 3px rgba(245,166,35,.1)}
 .card{background:var(--surface2);border:1px solid var(--border);border-radius:12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.anim-fade{animation:fadeIn .2s ease-out}
 </style>
 </head>
 <body>
@@ -627,14 +630,18 @@ function Dashboard({reports,lang,brand='siello',headerLogo,onNew,onOpen,onDelete
                 <div key={r.id} className="card"
                   onClick={()=>onOpen(r.id)}
                   style={{padding:'13px 16px',cursor:'pointer',display:'flex',
-                    alignItems:'center',gap:14,transition:'all .15s'}}
+                    alignItems:'center',gap:14,transition:'border-color .15s,background .15s,transform .15s,box-shadow .15s'}}
                   onMouseEnter={e=>{
                     e.currentTarget.style.borderColor='rgba(245,166,35,.35)';
-                    e.currentTarget.style.background='var(--surface2)';
+                    e.currentTarget.style.background='rgba(245,166,35,.03)';
+                    e.currentTarget.style.transform='translateX(2px)';
+                    e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,.4)';
                   }}
                   onMouseLeave={e=>{
                     e.currentTarget.style.borderColor='var(--border)';
-                    e.currentTarget.style.background='var(--surface)';
+                    e.currentTarget.style.background='';
+                    e.currentTarget.style.transform='';
+                    e.currentTarget.style.boxShadow='';
                   }}>
                   {/* Photo / Initial */}
                   <div style={{width:46,height:46,borderRadius:10,overflow:'hidden',
@@ -1485,19 +1492,26 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingCh
             <React.Fragment key={i}>
               <button onClick={()=>setStep(i)}
                 style={{display:'flex',alignItems:'center',gap:5,background:'none',
-                  border:'none',cursor:'pointer',padding:'2px 3px'}}>
+                  border:'none',cursor:'pointer',padding:'3px 4px',borderRadius:6,
+                  transition:'background .15s',outline:'none'}}
+                onMouseEnter={e=>{if(i!==step)e.currentTarget.style.background='rgba(255,255,255,.04)'}}
+                onMouseLeave={e=>{e.currentTarget.style.background='none'}}>
                 <div style={{width:19,height:19,borderRadius:'50%',
                   display:'flex',alignItems:'center',justifyContent:'center',
                   fontSize:9,fontWeight:700,fontFamily:'var(--font)',flexShrink:0,
+                  transition:'background .15s,box-shadow .15s',
                   background:i===step?'var(--gold)':i<step?'rgba(245,166,35,.25)':'var(--surface3)',
+                  boxShadow:i===step?'0 0 8px rgba(245,166,35,.4)':'none',
                   color:i===step?'#000':i<step?'var(--gold)':'var(--muted)'}}>
                   {i<step?'✓':i+1}
                 </div>
                 <span style={{fontSize:11,fontWeight:600,whiteSpace:'nowrap',
+                  transition:'color .15s',
                   color:i===step?'var(--text)':'var(--muted)'}}>{s}</span>
               </button>
               {i<lastStep&&<div style={{flex:1,height:1,minWidth:6,
-                background:i<step?'var(--gold)':'var(--border)'}}/>}
+                transition:'background .3s',
+                background:i<step?'rgba(245,166,35,.6)':'var(--border)'}}/>}
             </React.Fragment>
           ))}
         </div>
@@ -1515,7 +1529,7 @@ function ReportForm({report,onUpdate,onPreview,onBack,lang,branding,onBrandingCh
         </div>
       </div>
       {/* Content */}
-      <div style={{flex:1,overflowY:'auto',padding:'20px'}}>
+      <div key={step} className="anim-fade" style={{flex:1,overflowY:'auto',padding:'20px'}}>
         {isCustom&&step===0&&
           <CustomBranding lang={lang} branding={branding} onChange={onBrandingChange}/>}
         {step-offset===0&&<Step1 report={report} onChange={handleChange} lang={lang}/>}
@@ -2038,15 +2052,8 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
               <PdfDiv label={i(lang,'pdfAnalysis')} accent={accent}/>
               <div style={{display:'flex',flexDirection:'column',gap:4}}>
                 {(()=>{
+                  try{
                   const cfg=report.customAttrConfig;
-                  const scoreDescriptor=(v)=>{
-                    if(v>=4.5)return{label:lang==='es'?'ÉLITE':'ELITE',c:'#34D399'};
-                    if(v>=3.8)return{label:lang==='es'?'DESTACADO':'OUTSTANDING',c:'#60A5FA'};
-                    if(v>=3.2)return{label:lang==='es'?'SOBRE MEDIA':'ABOVE AVG',c:accent};
-                    if(v>=2.5)return{label:lang==='es'?'PROMEDIO':'AVERAGE',c:P.muted};
-                    return{label:lang==='es'?'EN DESARROLLO':'DEVELOPING',c:P.faint};
-                  };
-                  // Build a key→{es,en} lookup from base groups for legacy string labels
                   const allBaseAttrs={};
                   const allBaseGroups={};
                   [...ATTR_GROUPS,...GK_ATTR_GROUPS].forEach(g=>{
@@ -2054,28 +2061,27 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                     g.attrs.forEach(a=>{allBaseAttrs[a.key]=a.label;});
                   });
                   const resolveLabel=(label,key)=>{
-                    if(typeof label==='object'&&label!==null&&(label.es||label.en)) return label;
-                    // look up original bilingual label by key
+                    if(label&&typeof label==='object'&&(label.es||label.en)) return label;
                     if(key&&allBaseAttrs[key]) return allBaseAttrs[key];
-                    return{es:label||'',en:label||''};
+                    return{es:String(label||''),en:String(label||'')};
                   };
                   const resolveGroupLabel=(label,id)=>{
-                    if(typeof label==='object'&&label!==null&&(label.es||label.en)) return label;
+                    if(label&&typeof label==='object'&&(label.es||label.en)) return label;
                     if(id&&allBaseGroups[id]) return allBaseGroups[id];
-                    return{es:label||'',en:label||''};
+                    return{es:String(label||''),en:String(label||'')};
                   };
                   let groups;
-                  if(cfg){
+                  if(cfg&&Array.isArray(cfg.groups)){
                     groups=cfg.groups
-                      .filter(g=>g.attrs.some(a=>a.enabled!==false))
-                      .map(g=>({g:{id:g.id,label:resolveGroupLabel(g.label,g.id),
-                        attrs:g.attrs.filter(a=>a.enabled!==false)
-                          .map(a=>({key:a.key,label:resolveLabel(a.label,a.key)}))},
+                      .filter(g=>Array.isArray(g.attrs)&&g.attrs.some(a=>a.enabled!==false))
+                      .map(g=>({g:{id:g.id||'g_x',label:resolveGroupLabel(g.label,g.id),
+                        attrs:(g.attrs||[]).filter(a=>a.enabled!==false)
+                          .map(a=>({key:a.key||'k_x',label:resolveLabel(a.label,a.key)}))},
                         color:g.color||'#FB923C'}));
-                    if(cfg.extraGroups){
-                      cfg.extraGroups.filter(g=>g.attrs.length>0).forEach(g=>{
-                        groups.push({g:{id:g.id,label:resolveGroupLabel(g.label,g.id),
-                          attrs:g.attrs.map(a=>({key:a.key,label:resolveLabel(a.label,a.key)}))},
+                    if(Array.isArray(cfg.extraGroups)){
+                      cfg.extraGroups.filter(g=>Array.isArray(g.attrs)&&g.attrs.length>0).forEach(g=>{
+                        groups.push({g:{id:g.id||'eg_x',label:resolveGroupLabel(g.label,g.id),
+                          attrs:g.attrs.map(a=>({key:a.key||'ek_x',label:resolveLabel(a.label,a.key)}))},
                           color:g.color||'#F5A623'});
                       });
                     }
@@ -2087,6 +2093,11 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                     ];
                   }
                   return groups;
+                  }catch(e){
+                    console.error('Kore Matrix render error:',e);
+                    const gs=getAttrGroups(report.position);
+                    return[{g:gs[0],color:'#34D399'},{g:gs[1],color:'#FB923C'}];
+                  }
                 })().map(({g,color})=>(
                   <div key={g.id} style={{marginBottom:18}}>
                     {/* Group header */}
@@ -2101,14 +2112,14 @@ function ReportPreview({report,lang,onEdit,branding,embedded}){
                     {g.attrs.map(({key,label})=>{
                       const v=report.attributes[key]||0;
                       const pct=(v/5)*100;
-                      const lStr=typeof label==='object'?(label[lang]||label.es):label;
+                      const lStr=label&&typeof label==='object'?(label[lang]||label.es||''):String(label||'');
                       const desc=v>0?{label:'',c:P.muted}:{label:'',c:P.muted};
                       return(
                         <div key={key} style={{display:'flex',alignItems:'center',gap:10,
                           padding:'5px 0'}}>
                           <span style={{fontSize:9,width:110,flexShrink:0,color:P.muted,
                             fontFamily:'Helvetica,Arial,sans-serif',fontWeight:600,lineHeight:1.2,
-                            textAlign:'right'}}>{lStr.replace('\n',' ')}</span>
+                            textAlign:'right'}}>{String(lStr).replace('\n',' ')}</span>
                           <div style={{flex:1,height:5,borderRadius:3,background:'rgba(255,255,255,0.06)'}}>
                             <div style={{height:'100%',borderRadius:3,width:`${pct}%`,
                               background:`linear-gradient(90deg,${color}88,${color})`,
