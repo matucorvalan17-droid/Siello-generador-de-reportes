@@ -3270,9 +3270,6 @@ function App(){
   );
 }
 
-window.onerror=function(msg,src,line,col,err){
-  document.body.innerHTML='<div style="position:fixed;inset:0;background:#dc2626;color:#fff;padding:24px;font-family:monospace;overflow:auto;z-index:99999"><div style="font-size:20px;font-weight:900;margin-bottom:12px">ERROR JS</div><pre style="font-size:12px;white-space:pre-wrap">'+String(msg)+'\n'+String(src)+':'+line+':'+col+'</pre></div>';
-};
 class ErrorBoundary extends React.Component{
   constructor(p){super(p);this.state={err:null,stack:''};}
   static getDerivedStateFromError(e){return{err:String(e)};}
