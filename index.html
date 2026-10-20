@@ -2474,7 +2474,7 @@ function newCover(){
   return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     playerName:'',dateOfBirth:'',nationality:'',position:'',
     foot:'',passport:'',height:'',weight:'',heightUnit:'cm',weightUnit:'kg',photoUrl:null,
-    photoX:50,photoY:30,
+    photoX:70,photoY:50,photoZoom:100,
     clubHistory:[],
     createdAt:new Date().toISOString()};
 }
@@ -2502,10 +2502,11 @@ function CoverPreview16x9({cover,lang}){
       {/* Player photo - full canvas, gradient overlay kills left side seamlessly */}
       {cover.photoUrl&&(
         <>
-          <div style={{position:'absolute',inset:0,
-            backgroundImage:`url(${cover.photoUrl})`,
-            backgroundSize:'cover',
-            backgroundPosition:`${cover.photoX??50}% ${cover.photoY??30}%`}}/>
+          <img src={cover.photoUrl} draggable={false}
+            style={{position:'absolute',
+              left:`${cover.photoX??70}%`,top:`${cover.photoY??50}%`,
+              height:`${cover.photoZoom??100}%`,width:'auto',maxWidth:'none',
+              transform:'translate(-50%,-50%)',pointerEvents:'none'}}/>
           {/* Single full-width overlay: pure black left, fades to transparent right */}
           <div style={{position:'absolute',inset:0,
             background:'linear-gradient(90deg,#000 0%,#000 42%,rgba(0,0,0,.85) 55%,rgba(0,0,0,.35) 72%,rgba(0,0,0,.05) 90%,transparent 100%)'}}/>
@@ -2677,16 +2678,16 @@ function CoverEditor({cover,onUpdate,lang}){
   const dragStart=useRef({mx:0,my:0,px:0,py:0});
   function startDrag(mx,my){
     dragging.current=true;
-    dragStart.current={mx,my,px:cover.photoX??50,py:cover.photoY??30};
+    dragStart.current={mx,my,px:cover.photoX??70,py:cover.photoY??50};
   }
   function moveDrag(mx,my){
     if(!dragging.current||!dragRef.current) return;
     const rect=dragRef.current.getBoundingClientRect();
-    const dx=((dragStart.current.mx-mx)/rect.width)*100;
-    const dy=((dragStart.current.my-my)/rect.height)*100;
+    const dx=((mx-dragStart.current.mx)/rect.width)*100;
+    const dy=((my-dragStart.current.my)/rect.height)*100;
     onUpdate({
-      photoX:Math.round(Math.max(0,Math.min(100,dragStart.current.px+dx))),
-      photoY:Math.round(Math.max(0,Math.min(100,dragStart.current.py+dy))),
+      photoX:Math.round(Math.max(-50,Math.min(150,dragStart.current.px+dx))),
+      photoY:Math.round(Math.max(-50,Math.min(150,dragStart.current.py+dy))),
     });
   }
   function endDrag(){dragging.current=false;}
@@ -2761,7 +2762,7 @@ function CoverEditor({cover,onUpdate,lang}){
               </label>
               {cover.photoUrl&&(
                 <button className="btn-ghost" style={{fontSize:11,padding:'6px 10px'}}
-                  onClick={()=>onUpdate({photoUrl:null,photoX:50,photoY:30})}>
+                  onClick={()=>onUpdate({photoUrl:null,photoX:70,photoY:50,photoZoom:100})}>
                   {L.remove}
                 </button>
               )}
@@ -2773,12 +2774,13 @@ function CoverEditor({cover,onUpdate,lang}){
                 {lang==='es'?'POSICIÓN DE LA FOTO':'PHOTO POSITION'}
               </div>
               {[
-                {label:lang==='es'?'Horizontal':'Horizontal',key:'photoX',val:cover.photoX??50},
-                {label:lang==='es'?'Vertical':'Vertical',key:'photoY',val:cover.photoY??30},
-              ].map(({label,key,val})=>(
+                {label:'Horizontal',key:'photoX',val:cover.photoX??70,min:-50,max:150},
+                {label:'Vertical',key:'photoY',val:cover.photoY??50,min:-50,max:150},
+                {label:'Zoom',key:'photoZoom',val:cover.photoZoom??100,min:50,max:300},
+              ].map(({label,key,val,min,max})=>(
                 <div key={key} style={{display:'flex',alignItems:'center',gap:8}}>
                   <span style={{fontSize:10,color:'var(--muted)',width:60,flexShrink:0}}>{label}</span>
-                  <input type="range" min="0" max="100" value={val}
+                  <input type="range" min={min} max={max} value={val}
                     style={{flex:1,accentColor:'#F5A623'}}
                     onChange={e=>onUpdate({[key]:Number(e.target.value)})}/>
                 </div>
