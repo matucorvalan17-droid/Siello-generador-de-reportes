@@ -2745,7 +2745,7 @@ function CoverEditor({cover,onUpdate,lang}){
     if(!el) return;
     try{
       if(window.htmlToImage){
-        const dataUrl=await window.htmlToImage.toJpeg(el,{quality:.95,pixelRatio:1.5});
+        const dataUrl=await window.htmlToImage.toJpeg(el,{quality:1,pixelRatio:3,width:1280,height:720,backgroundColor:'#050508',style:{zoom:1,transform:'none'}});
         const a=document.createElement('a');
         a.href=dataUrl;
         a.download=`portada-${(cover.playerName||'jugador').replace(/\s+/g,'-').toLowerCase()}.jpg`;
