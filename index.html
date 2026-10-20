@@ -46,12 +46,15 @@ input[type=range]:focus{outline:none}
 <div id="err" style="display:none;position:fixed;inset:0;z-index:99999;background:#dc2626;color:#fff;padding:24px;font-family:monospace;overflow:auto;font-size:13px"></div>
 <script>
 window.onerror=function(m,s,l,c,e){
+  // Ignore QuotaExceededError — handled inside saveCovers/saveReports
+  if(m&&m.indexOf('QuotaExceeded')!==-1) return true;
   var d=document.getElementById('err');
   d.style.display='block';
   d.innerHTML='<b style="font-size:20px">ERROR</b><br><br>'+m+'<br><br>'+s+':'+l+':'+c+'<br><br>'+(e&&e.stack?e.stack:'');
   return true;
 };
 window.onunhandledrejection=function(e){
+  if(e.reason&&String(e.reason).indexOf('QuotaExceeded')!==-1) return;
   var d=document.getElementById('err');
   d.style.display='block';
   d.innerHTML='<b style="font-size:20px">PROMISE ERROR</b><br><br>'+(e.reason?String(e.reason):'unknown');
@@ -374,7 +377,7 @@ function defaultAttrs(){return Object.fromEntries(ALL_KEYS.map(k=>[k,3]))}
 // ─── STORAGE ──────────────────────────────────────────────────────
 const SK='siello_v4';
 function loadReports(){try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch{return[]}}
-function saveReports(r){localStorage.setItem(SK,JSON.stringify(r))}
+function saveReports(r){try{localStorage.setItem(SK,JSON.stringify(r))}catch(e){console.warn('localStorage lleno (reportes):',e);}}
 
 const BK='siello_branding_v2';
 const DEFAULT_BRANDING={logo1Url:null,logo2Url:null,borderColor:'#F5A623',
@@ -383,7 +386,7 @@ function loadBranding(){
   try{return {...DEFAULT_BRANDING,...JSON.parse(localStorage.getItem(BK)||'{}')}}
   catch{return {...DEFAULT_BRANDING}}
 }
-function saveBranding(b){localStorage.setItem(BK,JSON.stringify(b))}
+function saveBranding(b){try{localStorage.setItem(BK,JSON.stringify(b))}catch(e){console.warn('localStorage lleno (branding):',e);}}
 function newReport(brand='siello'){
   const id=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now();
   return{id,brand,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),
@@ -2466,7 +2469,7 @@ function CustomBranding({lang,branding,onChange}){
 // ─── COVERS ────────────────────────────────────────────────────────
 const CK='siello_covers_v1';
 function loadCovers(){try{return JSON.parse(localStorage.getItem(CK)||'[]')}catch{return[]}}
-function saveCovers(c){localStorage.setItem(CK,JSON.stringify(c))}
+function saveCovers(c){try{localStorage.setItem(CK,JSON.stringify(c))}catch(e){console.warn('localStorage lleno (portadas):',e);alert('⚠️ Almacenamiento lleno: no se pudo guardar. Eliminá fotos grandes o abrí el sitio en una nueva ventana para liberar espacio.');}}
 function newCover(){
   return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     playerName:'',dateOfBirth:'',nationality:'',position:'',
@@ -3270,9 +3273,6 @@ function App(){
   );
 }
 
-window.onerror=function(msg,src,line,col,err){
-  document.body.innerHTML='<div style="position:fixed;inset:0;background:#dc2626;color:#fff;padding:24px;font-family:monospace;overflow:auto;z-index:99999"><div style="font-size:20px;font-weight:900;margin-bottom:12px">ERROR JS</div><pre style="font-size:12px;white-space:pre-wrap">'+String(msg)+'\n'+String(src)+':'+line+':'+col+'</pre></div>';
-};
 class ErrorBoundary extends React.Component{
   constructor(p){super(p);this.state={err:null,stack:''};}
   static getDerivedStateFromError(e){return{err:String(e)};}
